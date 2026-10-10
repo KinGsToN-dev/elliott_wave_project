@@ -31,7 +31,7 @@ class DiagonalDetector:
     def check_throw_over(self, p1, p3, p5, shape):
         """
         Проверка выброса (throw over) или недобоя (shortfall).
-        Линия 1-3 → W5 относительно неё.
+        Линия 1-3 -> W5 относительно неё.
         """
         slope = (p3 - p1) / 2.0
         expected_w5 = p3 + slope * 2
@@ -228,3 +228,4 @@ class DiagonalDetector:
     
     def get_last_diagonal(self):
         return self.diagonals[-1] if self.diagonals else None
+

@@ -50,7 +50,7 @@ class OverlapFilter:
             if not overlaps_impulse:
                 filtered_diagonals.append(d)
             else:
-                print(f"  × Убрана диагональ {d['start_time'].strftime('%m-%d %H:%M')} (перекрытие с импульсом)")
+                print(f"   Убрана диагональ {d['start_time'].strftime('%m-%d %H:%M')} (перекрытие с импульсом)")
         
         # Коррекции — убираем перекрывающиеся с импульсами ИЛИ диагоналями
         filtered_corrections = []

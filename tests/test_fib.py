@@ -766,7 +766,7 @@ class TestExtensionExtra:
         results = calc.calculate_all([], [corr])
         assert len(results) == 1
         assert 'wc' in results[0]
-        # flat_expanded → только 1.618
+        # flat_expanded -> только 1.618
         assert 1.618 in results[0]['wc']['targets']
 
 # ============================================================
@@ -939,7 +939,7 @@ class TestExtensionV2:
 # ============================================================
 class TestExtensionV2:
     def test_w1_extension_rule(self):
-        """W1 растянута → W5 = 61.8% от W1."""
+        """W1 растянута -> W5 = 61.8% от W1."""
         analyzer = ExtensionAnalyzer()
         result = analyzer.check_w1_extension(0.0100, 0.00618)
         assert result['valid'] == True
@@ -952,14 +952,14 @@ class TestExtensionV2:
         assert result['valid'] == False
     
     def test_w3_extension_rule(self):
-        """W3 растянута → W1 и W5 пропорциональны."""
+        """W3 растянута -> W1 и W5 пропорциональны."""
         analyzer = ExtensionAnalyzer()
         result = analyzer.check_w3_extension(0.0100, 0.0110)
         assert result['valid'] == True
         assert result['rule'] == 'w3_extension_w1_w5_proportional'
     
     def test_w5_extension_rule(self):
-        """W5 растянута → W5 = 161.8% от W3."""
+        """W5 растянута -> W5 = 161.8% от W3."""
         analyzer = ExtensionAnalyzer()
         result = analyzer.check_w5_extension(0.0100, 0.01618)
         assert result['valid'] == True
@@ -1013,3 +1013,4 @@ class TestTriangleProportions:
         calc = ProportionsCalculator()
         result = calc.check_triangle_alternation(0, 0.0100, 0.0100, 'contracting')
         assert result['valid'] == False
+

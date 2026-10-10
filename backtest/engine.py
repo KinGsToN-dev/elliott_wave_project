@@ -115,7 +115,7 @@ class BacktestEngine:
                 if direction == 'BUY':
                     # Прибыль по текущей свече
                     current_profit = high - entry_price
-                    # Если прибыль >= trigger × stop_dist → двигаем стоп
+                    # Если прибыль >= trigger × stop_dist -> двигаем стоп
                     if current_profit >= stop_dist * self.trailing_trigger:
                         new_stop = high - stop_dist * self.trailing_distance
                         if new_stop > current_stop:

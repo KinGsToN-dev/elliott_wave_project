@@ -64,7 +64,7 @@ class TestZigZag:
         zz2 = ZigZag(simple_data, length=5)
         pivots2 = zz2.find_pivots()
         
-        assert len(pivots1) >= len(pivots2), "Больше length → меньше пивотов"
+        assert len(pivots1) >= len(pivots2), "Больше length -> меньше пивотов"
     
     def test_empty_data(self):
         """Что если данных нет?"""
@@ -102,3 +102,4 @@ class TestZigZag:
         line = zz.get_zigzag_line()
         assert 'price' in line.columns
         assert 'type' in line.columns
+

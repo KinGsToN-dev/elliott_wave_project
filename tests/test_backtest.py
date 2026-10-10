@@ -152,7 +152,7 @@ class TestW2W3Strategy:
     def test_init(self):
         """Инициализация."""
         strat = W2W3Strategy()
-        assert strat.name == "W2→W3"
+        assert strat.name == "W2->W3"
         assert strat.min_w2_ratio == 0.4
         assert strat.max_w2_ratio == 0.85
     
@@ -326,7 +326,7 @@ class TestMetricsCoverage:
 class TestW4W5Strategy:
     def test_init(self):
         strat = W4W5Strategy()
-        assert strat.name == "W4→W5"
+        assert strat.name == "W4->W5"
     
     def test_empty_impulses(self):
         strat = W4W5Strategy()
@@ -422,7 +422,7 @@ class TestW5DivergenceStrategy:
 class TestMTFConfirmedStrategy:
     def test_init(self):
         strat = MTFConfirmedStrategy()
-        assert strat.name == "W2→W3 + MTF"
+        assert strat.name == "W2->W3 + MTF"
         assert strat.ema_len == 200
     
     def test_empty_impulses(self):

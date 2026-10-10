@@ -2,7 +2,7 @@
 MTFConfirmedStrategy - Стратегия с MTF-подтверждением.
 
 Логика:
-- Берём сигналы от W2→W3.
+- Берём сигналы от W2->W3.
 - Фильтруем по тренду на текущем ТФ (EMA 200).
 - Вход: только по направлению тренда.
 """
@@ -11,11 +11,11 @@ from .w2_w3 import W2W3Strategy
 
 
 class MTFConfirmedStrategy(BaseStrategy):
-    """Стратегия W2→W3 с MTF-подтверждением."""
+    """Стратегия W2->W3 с MTF-подтверждением."""
     
     def __init__(self, ema_len=200):
-        super().__init__(name="W2→W3 + MTF")
-        self.description = "W2→W3 с фильтром по EMA на текущем ТФ"
+        super().__init__(name="W2->W3 + MTF")
+        self.description = "W2->W3 с фильтром по EMA на текущем ТФ"
         self.ema_len = ema_len
         self.base = W2W3Strategy()
     
@@ -50,3 +50,4 @@ class MTFConfirmedStrategy(BaseStrategy):
                 filtered.append(sig)
         
         return filtered
+

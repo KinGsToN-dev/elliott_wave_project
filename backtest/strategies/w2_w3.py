@@ -1,5 +1,5 @@
 ﻿"""
-W2W3Strategy - Стратегия W2 → W3.
+W2W3Strategy - Стратегия W2 -> W3.
 
 Логика:
 - W2 — коррекция после W1.
@@ -13,10 +13,10 @@ from fib.extension import ExtensionCalculator
 
 
 class W2W3Strategy(BaseStrategy):
-    """Стратегия W2 → W3."""
+    """Стратегия W2 -> W3."""
     
     def __init__(self, min_w2_ratio=0.4, max_w2_ratio=0.85, target_ratio=1.618):
-        super().__init__(name="W2→W3")
+        super().__init__(name="W2->W3")
         self.description = "Вход после W2, цель — W3"
         self.min_w2_ratio = min_w2_ratio
         self.max_w2_ratio = max_w2_ratio
@@ -80,3 +80,4 @@ class W2W3Strategy(BaseStrategy):
             })
         
         return trades
+

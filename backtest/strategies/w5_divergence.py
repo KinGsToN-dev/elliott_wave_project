@@ -1,5 +1,5 @@
 ﻿"""
-W5DivergenceStrategy - Стратегия W5 + дивергенция → разворот.
+W5DivergenceStrategy - Стратегия W5 + дивергенция -> разворот.
 
 Логика:
 - Импульс завершён.
@@ -72,3 +72,4 @@ class W5DivergenceStrategy(BaseStrategy):
             })
         
         return trades
+

@@ -88,7 +88,7 @@ def make_bearish_contracting_diagonal():
 def make_zigzag_correction():
     """
     Простой зигзаг 5-3-5.
-    A → B → C, где W_B не заходит за начало W_A, W_C < W_A.
+    A -> B -> C, где W_B не заходит за начало W_A, W_C < W_A.
     """
     points = [
         1.1500,  # старт
@@ -337,3 +337,4 @@ if __name__ == "__main__":
         print(f"[OK] Создан: {name} ({len(df)} свечей)")
     
     print("\n[DONE] Все тестовые данные сгенерированы.")
+

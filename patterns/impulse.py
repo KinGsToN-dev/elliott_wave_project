@@ -195,8 +195,8 @@ class ImpulseDetector:
     def detect_double_pattern(self, impulse):
         """
         Определяет визуальный паттерн при усечении.
-        Восходящий импульс → Двойная вершина.
-        Нисходящий импульс → Двойное дно.
+        Восходящий импульс -> Двойная вершина.
+        Нисходящий импульс -> Двойное дно.
         """
         if not impulse.get('truncated'):
             return None
@@ -215,4 +215,5 @@ class ImpulseDetector:
                 'description': 'Двойное дно',
                 'signal': 'bullish_reversal',
             }
+
 

@@ -46,14 +46,14 @@ class CombinationDetector:
         
         doubles = []
         
-        # 4 точки → range(len - 3)
+        # 4 точки -> range(len - 3)
         for i in range(len(prices) - 3):
             p0, p1, p2, p3 = prices[i], prices[i+1], prices[i+2], prices[i+3]
             t0, t1, t2, t3 = types[i], types[i+1], types[i+2], types[i+3]
             
             # W-X-Y структура требует:
-            # bull: low → high → low → high
-            # bear: high → low → high → low
+            # bull: low -> high -> low -> high
+            # bear: high -> low -> high -> low
             is_bullish = (t0 == 'low' and t1 == 'high' and t2 == 'low' and t3 == 'high')
             is_bearish = (t0 == 'high' and t1 == 'low' and t2 == 'high' and t3 == 'low')
             
@@ -123,7 +123,7 @@ class CombinationDetector:
         
         triples = []
         
-        # 6 точек → range(len - 5)
+        # 6 точек -> range(len - 5)
         for i in range(len(prices) - 5):
             p0, p1, p2, p3, p4, p5 = (prices[i], prices[i+1], prices[i+2], 
                                        prices[i+3], prices[i+4], prices[i+5])
@@ -223,3 +223,4 @@ class CombinationDetector:
     
     def get_combinations(self):
         return self.combinations
+

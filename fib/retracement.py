@@ -137,7 +137,7 @@ class RetracementCalculator:
             # points = [(t0, p0, '0'), (t1, p1, '1'), ..., (t5, p5, '5')]
             p0, p1, p2, p3, p4, p5 = [pt[1] for pt in points]
             
-            # W2 — откат от W1 (p0 → p1)
+            # W2 — откат от W1 (p0 -> p1)
             w2_type = 'deep' if imp.get('direction') == 'bullish' else 'deep'
             self.results.append({
                 'pattern_id': id(imp),
@@ -170,3 +170,4 @@ class RetracementCalculator:
     
     def get_last_results(self):
         return self.results
+

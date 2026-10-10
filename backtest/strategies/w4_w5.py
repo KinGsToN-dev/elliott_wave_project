@@ -1,5 +1,5 @@
 ﻿"""
-W4W5Strategy - Стратегия W4 → W5.
+W4W5Strategy - Стратегия W4 -> W5.
 
 Логика:
 - W4 — коррекция после W3.
@@ -13,10 +13,10 @@ from fib.extension import ExtensionCalculator
 
 
 class W4W5Strategy(BaseStrategy):
-    """Стратегия W4 → W5."""
+    """Стратегия W4 -> W5."""
     
     def __init__(self, min_w4_ratio=0.2, max_w4_ratio=0.6, target_ratio=1.000):
-        super().__init__(name="W4→W5")
+        super().__init__(name="W4->W5")
         self.description = "Вход после W4, цель — W5"
         self.min_w4_ratio = min_w4_ratio
         self.max_w4_ratio = max_w4_ratio
@@ -77,3 +77,4 @@ class W4W5Strategy(BaseStrategy):
             })
         
         return trades
+

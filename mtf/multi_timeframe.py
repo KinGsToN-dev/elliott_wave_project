@@ -40,7 +40,7 @@ class MultiTimeframeAnalyzer:
     def __init__(self, symbol='EURUSD', candles_count=500):
         self.symbol = symbol
         self.candles_count = candles_count
-        self.results = {}  # tf_name → dict с анализом
+        self.results = {}  # tf_name -> dict с анализом
     
     def analyze_tf(self, df, tf_name, zigzag_length=5,
                    impulse_atr=2.0, diagonal_atr=1.0, correction_atr=1.0):
@@ -234,3 +234,4 @@ class MultiTimeframeAnalyzer:
     
     def get_results(self):
         return self.results
+

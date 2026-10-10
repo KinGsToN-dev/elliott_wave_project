@@ -167,7 +167,7 @@ def run_backtest(args):
             if mtf_filter:
                 before = len(signals)
                 signals = mtf_filter.filter_signals(signals)
-                print(f"\n[{strat_name}] MTF-фильтр: {before} → {len(signals)} сигналов")
+                print(f"\n[{strat_name}] MTF-фильтр: {before} -> {len(signals)} сигналов")
             
             if not signals:
                 print(f"[{strat_name}] Нет сигналов.")
@@ -308,7 +308,7 @@ def main():
         if args.mode:
             mode = get_mode(args.mode)
             tf_name = mode['timeframes'][0]
-            print(f"[INFO] Режим: {mode['name']} → ТФ: {tf_name}")
+            print(f"[INFO] Режим: {mode['name']} -> ТФ: {tf_name}")
             run_single_tf(args, tf_name)
         else:
             run_single_tf(args, args.tf)
@@ -316,3 +316,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

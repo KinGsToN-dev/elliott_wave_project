@@ -151,7 +151,7 @@ class CorrectionDetector:
         (коррекция вниз — идёт от high к low, но структура обратная)
         """
         # Здесь p1 = вершина (начало коррекции), p3 = конец коррекции
-        # W_A = p0→p1 (вверх), W_B = p1→p2 (вниз), W_C = p2→p3 (вверх)
+        # W_A = p0->p1 (вверх), W_B = p1->p2 (вниз), W_C = p2->p3 (вверх)
         # Это НЕ коррекция, а движение по тренду. Пропускаем.
         return {'valid': False}
     
@@ -159,7 +159,7 @@ class CorrectionDetector:
         """
         Классификация ABC для случая: p0=high, p1=low, p2=high, p3=low.
         Коррекция вверх внутри нисходящего тренда.
-        W_A = p0→p1 (вниз), W_B = p1→p2 (вверх), W_C = p2→p3 (вниз).
+        W_A = p0->p1 (вниз), W_B = p1->p2 (вверх), W_C = p2->p3 (вниз).
         """
         p0, p1, p2, p3 = [float(x) for x in p]
         
@@ -285,3 +285,4 @@ class CorrectionDetector:
     
     def get_last_correction(self):
         return self.corrections[-1] if self.corrections else None
+

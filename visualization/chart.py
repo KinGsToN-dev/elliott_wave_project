@@ -97,7 +97,7 @@ class EWChart:
                     style='solid'
                 )
                 
-                # Время в двух точках (одно и то же, но с разной ценой → вертикальный отрезок)
+                # Время в двух точках (одно и то же, но с разной ценой -> вертикальный отрезок)
                 t_str = pd.to_datetime(time).strftime('%Y-%m-%d %H:%M:%S')
                 
                 df = pd.DataFrame({
@@ -119,3 +119,4 @@ class EWChart:
     
     def show(self):
         self.chart.show(block=True)
+

@@ -2,8 +2,8 @@
 Alternation - Правило чередования W2/W4.
 
 Правила (traderevolution.by):
-- Если W2 глубокая (зигзаг) → W4 плоская (плоскость/треугольник).
-- Если W2 плоская → W4 глубокая.
+- Если W2 глубокая (зигзаг) -> W4 плоская (плоскость/треугольник).
+- Если W2 плоская -> W4 глубокая.
 - W4 может быть флэтом, треугольником или комбинацией.
 - W2 чаще всего зигзаг или комбинация зигзагов.
 - В диагоналях чередования НЕТ.
@@ -90,7 +90,7 @@ class AlternationChecker:
     def check_abc_alternation(self, a_ratio, b_ratio):
         """
         Чередование A-B в зигзаге.
-        A глубокая → B плоская, и наоборот.
+        A глубокая -> B плоская, и наоборот.
         """
         a_type = self.classify_w2(a_ratio)
         b_type = self.classify_w4(b_ratio)
@@ -143,3 +143,4 @@ class AlternationChecker:
     
     def get_results(self):
         return self.results
+

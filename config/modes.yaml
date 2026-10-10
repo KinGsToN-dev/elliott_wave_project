@@ -48,3 +48,24 @@ intraday:
   trailing_distance: 0.3
   # Стратегии (без wc_reversal)
   strategies: ['w2_w3', 'w4_w5', 'w5_divergence', 'mtf_confirmed', 'combined']
+
+
+scalping:
+  name: "Скальпинг (M5/M15)"
+  description: "Скальпинг: сделки держатся минуты"
+  timeframes: ['M5', 'M15']
+  zigzag_length: 3
+  impulse_atr: 1.0
+  diagonal_atr: 0.8
+  correction_atr: 0.8
+  max_bars_hold: 10
+  use_mtf_filter: true
+  mtf_timeframe: 'H1'
+  # Цели для скальпинга — ближе
+  target_w2_w3: 1.000
+  target_w4_w5: 0.500
+  min_retracement: 0.236
+  use_trailing_stop: false
+  trailing_trigger: 0.5
+  trailing_distance: 0.3
+  strategies: ['w2_w3', 'w4_w5', 'w5_divergence', 'mtf_confirmed', 'combined']

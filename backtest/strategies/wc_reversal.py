@@ -1,5 +1,5 @@
 ﻿"""
-WCReversalStrategy - Стратегия W_C → разворот (ИНВЕРТИРОВАНО).
+WCReversalStrategy - Стратегия W_C -> разворот (ИНВЕРТИРОВАНО).
 
 Логика:
 - W_C — завершение коррекции (зигзаг или плоскость).
@@ -12,7 +12,7 @@ from fib.extension import ExtensionCalculator
 
 
 class WCReversalStrategy(BaseStrategy):
-    """Стратегия W_C → разворот (инвертировано)."""
+    """Стратегия W_C -> разворот (инвертировано)."""
     
     def __init__(self):
         super().__init__(name="W_C Reversal (INV)")
