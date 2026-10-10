@@ -1,10 +1,9 @@
 ﻿"""
-WCReversalStrategy - Стратегия W_C → разворот.
+WCReversalStrategy - Стратегия W_C → разворот (ИНВЕРТИРОВАНО).
 
 Логика:
 - W_C — завершение коррекции (зигзаг или плоскость).
-- После W_C ожидаем новое движение по тренду.
-- Вход: против коррекции.
+- Вход: ПО направлению коррекции (продолжение движения).
 - Цель: 100% W_A.
 - Стоп: начало W_C.
 """
@@ -13,11 +12,11 @@ from fib.extension import ExtensionCalculator
 
 
 class WCReversalStrategy(BaseStrategy):
-    """Стратегия W_C → разворот."""
+    """Стратегия W_C → разворот (инвертировано)."""
     
     def __init__(self):
-        super().__init__(name="W_C Reversal")
-        self.description = "Вход после завершения W_C (зигзаг/плоскость)"
+        super().__init__(name="W_C Reversal (INV)")
+        self.description = "Вход после завершения W_C (ИНВЕРТИРОВАНО)"
         self.ext = ExtensionCalculator()
     
     def generate_signals(self, df, impulses=None, diagonals=None, corrections=None, combinations=None):
@@ -52,13 +51,11 @@ class WCReversalStrategy(BaseStrategy):
             # Стоп — начало W_C (pB)
             stop_price = pB
             
-            # Направление — против коррекции
-            # Если коррекция bearish (вниз), то после неё — BUY
-            # Если коррекция bullish (вверх), то после неё — SELL
+            # ИНВЕРТИРОВАНО: вход ПО направлению коррекции
             if corr['direction'] == 'bearish':
-                direction = 'BUY'
-            else:
                 direction = 'SELL'
+            else:
+                direction = 'BUY'
             
             trades.append({
                 'entry_time': points[3][0],  # W_C
