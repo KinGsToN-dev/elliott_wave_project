@@ -1,0 +1,51 @@
+﻿# ============================================================
+# Режимы торговли — Elliott Wave Project
+# ============================================================
+# Каждый режим = свой ТФ, свои параметры, свои фильтры
+# ============================================================
+
+swing:
+  name: "Свинг (H4/D1)"
+  description: "Свинг-трейдинг: сделки держатся дни-недели"
+  timeframes: ['H4', 'D1']
+  zigzag_length: 5
+  impulse_atr: 2.0
+  diagonal_atr: 1.0
+  correction_atr: 1.0
+  max_bars_hold: 50
+  use_mtf_filter: false
+
+position:
+  name: "Позиционный (D1/W1)"
+  description: "Позиционная торговля: сделки держатся недели-месяцы"
+  timeframes: ['D1', 'W1']
+  zigzag_length: 8
+  impulse_atr: 2.5
+  diagonal_atr: 1.5
+  correction_atr: 1.5
+  max_bars_hold: 100
+  use_mtf_filter: false
+
+intraday:
+  name: "Интрадей (M30/H1)"
+  description: "Внутридневная торговля: сделки держатся часы"
+  timeframes: ['M30', 'H1']
+  zigzag_length: 5
+  impulse_atr: 1.5
+  diagonal_atr: 1.0
+  correction_atr: 1.0
+  max_bars_hold: 10
+  use_mtf_filter: true
+  mtf_timeframe: 'H4'
+
+# ============================================================
+# Скальпинг — закомментирован, добавим позже
+# ============================================================
+# scalping:
+#   name: "Скальпинг (M5/M15)"
+#   timeframes: ['M5', 'M15']
+#   zigzag_length: 3
+#   impulse_atr: 1.0
+#   max_bars_hold: 5
+#   use_mtf_filter: true
+#   mtf_timeframe: 'H1'

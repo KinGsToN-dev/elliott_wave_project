@@ -20,11 +20,14 @@ from patterns.correction import CorrectionDetector
 
 # Маппинг таймфреймов MT5
 TIMEFRAMES = {
+    'M5': 5,
     'M15': 15,
+    'M30': 30,
     'H1': 16385,
     'H4': 16388,
     'D1': 16408,
     'W1': 32769,
+    'MN': 49153,
 }
 
 # Порядок от младшего к старшему
