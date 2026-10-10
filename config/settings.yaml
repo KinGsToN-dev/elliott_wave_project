@@ -1,0 +1,23 @@
+﻿# Elliott Wave Project - Settings
+
+symbol: "EURUSD"
+timeframe: 16385  # H1 = 16385, H4 = 16388, D1 = 16408, W1 = 32769, MN1 = 49153
+
+candles_count: 500
+
+zigzag:
+  fast: 3
+  medium: 8
+  slow: 21
+  active: 5            # Какой ZigZag используем
+
+impulse:
+  min_atr_ratio: 1.5   # Минимальный размер импульса в ATR
+  max_show: 5          # Показывать последние N импульсов
+
+fibonacci:
+  retracement: [0.236, 0.382, 0.5, 0.618, 0.786]
+  extension: [1.272, 1.618, 2.0, 2.618]
+
+ema:
+  length: 200
