@@ -13,7 +13,8 @@ from backtest.engine import BacktestEngine
 from backtest.metrics import BacktestMetrics
 from backtest.strategies import get_strategy, list_strategies, STRATEGIES
 from backtest.strategies.w2_w3 import W2W3Strategy
-
+from backtest.strategies.w4_w5 import W4W5Strategy
+from backtest.strategies.wc_reversal import WCReversalStrategy
 
 def make_df(n=200, trend='up'):
     """Хелпер: создаёт DataFrame."""
@@ -320,3 +321,78 @@ class TestMetricsCoverage:
         assert 'BACKTEST RESULTS' in captured.out
         assert 'Test Strategy' in captured.out
         assert m['total_trades'] == 2
+
+
+class TestW4W5Strategy:
+    def test_init(self):
+        strat = W4W5Strategy()
+        assert strat.name == "W4→W5"
+    
+    def test_empty_impulses(self):
+        strat = W4W5Strategy()
+        df = make_df()
+        signals = strat.generate_signals(df, [], [], [], [])
+        assert signals == []
+    
+    def test_valid_impulse(self):
+        strat = W4W5Strategy()
+        df = make_df()
+        # W3 = 0.0200, W4 = 0.0080 (40% — в диапазоне)
+        imp = {
+            'direction': 'bullish',
+            'points': [
+                (df.index[10], 1.1000, '0'),
+                (df.index[20], 1.1100, '1'),
+                (df.index[30], 1.1050, '2'),
+                (df.index[40], 1.1250, '3'),
+                (df.index[50], 1.1170, '4'),
+                (df.index[60], 1.1450, '5'),
+            ],
+        }
+        signals = strat.generate_signals(df, [imp], [], [], [])
+        assert isinstance(signals, list)
+
+
+class TestWCReversalStrategy:
+    def test_init(self):
+        strat = WCReversalStrategy()
+        assert strat.name == "W_C Reversal"
+    
+    def test_empty_corrections(self):
+        strat = WCReversalStrategy()
+        df = make_df()
+        signals = strat.generate_signals(df, [], [], [], [])
+        assert signals == []
+    
+    def test_valid_zigzag(self):
+        strat = WCReversalStrategy()
+        df = make_df()
+        corr = {
+            'type': 'zigzag',
+            'direction': 'bearish',
+            'subtype': 'regular',
+            'points': [
+                (df.index[10], 1.1500, '0'),
+                (df.index[20], 1.1400, 'A'),
+                (df.index[30], 1.1450, 'B'),
+                (df.index[40], 1.1300, 'C'),
+            ],
+        }
+        signals = strat.generate_signals(df, [], [], [corr], [])
+        assert isinstance(signals, list)
+
+
+class TestStrategyRegistryV2:
+    def test_list_strategies_v2(self):
+        strategies = list_strategies()
+        assert 'w2_w3' in strategies
+        assert 'w4_w5' in strategies
+        assert 'wc_reversal' in strategies
+    
+    def test_get_w4_w5(self):
+        cls = get_strategy('w4_w5')
+        assert cls == W4W5Strategy
+    
+    def test_get_wc_reversal(self):
+        cls = get_strategy('wc_reversal')
+        assert cls == WCReversalStrategy
