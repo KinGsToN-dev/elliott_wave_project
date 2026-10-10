@@ -138,7 +138,7 @@ def run_backtest(args):
                 continue
             
             # Симуляция
-            engine = BacktestEngine(max_bars_hold=args.max_bars)
+            engine = BacktestEngine(max_bars_hold=args.max_bars, symbol=args.symbol)
             trades = engine.run(signals, df)
             
             # Метрики

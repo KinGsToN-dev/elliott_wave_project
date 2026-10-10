@@ -7,18 +7,71 @@ BacktestEngine - Движок симуляции сделок.
 import pandas as pd
 import numpy as np
 
+# ============================================================
+# КОЭФФИЦИЕНТЫ ПИПСОВ ДЛЯ РАЗНЫХ СИМВОЛОВ
+# ============================================================
+# Для 5-значных валют (EURUSD, GBPUSD) — 10000
+# Для 3-значных валют (USDJPY, EURJPY) — 100
+# Для золота (XAUUSD) — 100
+# Для серебра (XAGUSD) — 1000
+# ============================================================
+PIP_MULTIPLIER = {
+    # 5-значные валюты
+    'EURUSD': 10000,
+    'GBPUSD': 10000,
+    'AUDUSD': 10000,
+    'NZDUSD': 10000,
+    'USDCAD': 10000,
+    'USDCHF': 10000,
+    'EURGBP': 10000,
+    'EURCHF': 10000,
+    'EURCAD': 10000,
+    'EURAUD': 10000,
+    'GBPCHF': 10000,
+    'GBPCAD': 10000,
+    'GBPAUD': 10000,
+    'AUDCAD': 10000,
+    'AUDCHF': 10000,
+    'AUDNZD': 10000,
+    'NZDCAD': 10000,
+    'NZDCHF': 10000,
+    'CADCHF': 10000,
+    
+    # 3-значные валюты (JPY)
+    'USDJPY': 100,
+    'EURJPY': 100,
+    'GBPJPY': 100,
+    'AUDJPY': 100,
+    'CADJPY': 100,
+    'CHFJPY': 100,
+    'NZDJPY': 100,
+    
+    # Металлы
+    'XAUUSD': 100,    # Золото
+    'XAGUSD': 1000,   # Серебро
+    'XPTUSD': 100,    # Платина
+    
+    # Крипто (опционально)
+    'BTCUSD': 1,
+    'ETHUSD': 10,
+}
+
+
 
 class BacktestEngine:
     """Движок бэктеста."""
     
-    def __init__(self, max_bars_hold=50, spread=0.0):
+    def __init__(self, max_bars_hold=50, spread=0.0, symbol='EURUSD'):
         """
         Args:
             max_bars_hold: максимум свечей удержания сделки
             spread: спред (в пунктах)
+            symbol: торговый символ (для правильного расчёта пипсов)
         """
         self.max_bars_hold = max_bars_hold
         self.spread = spread
+        self.symbol = symbol
+        self.pip_multiplier = PIP_MULTIPLIER.get(symbol, 10000)
         self.trades = []
     
     def simulate_trade(self, signal, df):
@@ -57,7 +110,7 @@ class BacktestEngine:
             if direction == 'BUY':
                 # Проверка цели
                 if high >= target:
-                    pnl = (target - entry_price) * 10000  # в пипсах
+                    pnl = (target - entry_price) * self.pip_multiplier  # в пипсах
                     return {
                         'entry_time': entry_time,
                         'entry_price': entry_price,
@@ -70,7 +123,7 @@ class BacktestEngine:
                     }
                 # Проверка стопа
                 if low <= stop:
-                    pnl = (stop - entry_price) * 10000
+                    pnl = (stop - entry_price) * self.pip_multiplier
                     return {
                         'entry_time': entry_time,
                         'entry_price': entry_price,
@@ -83,7 +136,7 @@ class BacktestEngine:
                     }
             else:  # SELL
                 if low <= target:
-                    pnl = (entry_price - target) * 10000
+                    pnl = (entry_price - target) * self.pip_multiplier
                     return {
                         'entry_time': entry_time,
                         'entry_price': entry_price,
@@ -95,7 +148,7 @@ class BacktestEngine:
                         'bars_held': len(after.loc[:time]),
                     }
                 if high >= stop:
-                    pnl = (entry_price - stop) * 10000
+                    pnl = (entry_price - stop) * self.pip_multiplier
                     return {
                         'entry_time': entry_time,
                         'entry_price': entry_price,
@@ -112,9 +165,9 @@ class BacktestEngine:
         last_time = after.index[-1]
         
         if direction == 'BUY':
-            pnl = (last['close'] - entry_price) * 10000
+            pnl = (last['close'] - entry_price) * self.pip_multiplier
         else:
-            pnl = (entry_price - last['close']) * 10000
+            pnl = (entry_price - last['close']) * self.pip_multiplier
         
         return {
             'entry_time': entry_time,

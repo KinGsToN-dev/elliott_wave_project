@@ -550,3 +550,24 @@ class TestCombinedCoverage:
         }
         signals = strat.generate_signals(df, [imp], [], [], [])
         assert isinstance(signals, list)
+
+class TestPipMultiplier:
+    def test_eurusd_multiplier(self):
+        """EURUSD — 10000."""
+        engine = BacktestEngine(symbol='EURUSD')
+        assert engine.pip_multiplier == 10000
+    
+    def test_usdjpy_multiplier(self):
+        """USDJPY — 100."""
+        engine = BacktestEngine(symbol='USDJPY')
+        assert engine.pip_multiplier == 100
+    
+    def test_xauusd_multiplier(self):
+        """XAUUSD — 100."""
+        engine = BacktestEngine(symbol='XAUUSD')
+        assert engine.pip_multiplier == 100
+    
+    def test_default_multiplier(self):
+        """Неизвестный символ — 10000."""
+        engine = BacktestEngine(symbol='UNKNOWN')
+        assert engine.pip_multiplier == 10000
