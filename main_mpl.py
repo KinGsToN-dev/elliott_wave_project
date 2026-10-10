@@ -1,5 +1,5 @@
 ﻿"""
-Main - Полный анализ: импульсы + диагонали + коррекции + Фибо + MTF.
+Main - Полный анализ + бэктест.
 """
 import sys
 import os
@@ -21,6 +21,9 @@ from mtf.panel_builder import PanelBuilder
 from visualization.chart_structure import StructureChart
 from visualization.chart_fib import FibVisualizer
 from visualization.panel import MTFPanel
+from backtest.engine import BacktestEngine
+from backtest.metrics import BacktestMetrics
+from backtest.strategies import get_strategy, list_strategies
 
 DEFAULT_TF = 'H4'
 DEFAULT_SYMBOL = 'EURUSD'
@@ -32,6 +35,7 @@ CORRECTION_ATR = 1.0
 MAX_SHOW = 5
 USE_FILTER = True
 SHOW_FIB = True
+MAX_BARS_HOLD = 50
 
 
 def parse_args():
@@ -41,16 +45,18 @@ def parse_args():
     parser.add_argument('--candles', type=int, default=CANDLES_COUNT)
     parser.add_argument('--zigzag', type=int, default=ZIGZAG_LENGTH)
     parser.add_argument('--show', type=int, default=MAX_SHOW)
-    parser.add_argument('--no-filter', action='store_true', help='Отключить фильтр наложений')
-    parser.add_argument('--no-fib', action='store_true', help='Отключить уровни Фибо')
-    parser.add_argument('--mtf', action='store_true', help='Включить MTF-панель (все 5 ТФ)')
+    parser.add_argument('--no-filter', action='store_true')
+    parser.add_argument('--no-fib', action='store_true')
+    parser.add_argument('--mtf', action='store_true')
+    parser.add_argument('--backtest', action='store_true', help='Запустить бэктест')
+    parser.add_argument('--strategy', type=str, default=None, help='Имя стратегии (например, w2_w3)')
+    parser.add_argument('--all-strategies', action='store_true', help='Запустить все стратегии')
+    parser.add_argument('--max-bars', type=int, default=MAX_BARS_HOLD, help='Макс свечей удержания')
     return parser.parse_args()
 
 
 def load_data_for_tf(symbol, tf_name, count):
-    """Загрузка данных для указанного ТФ."""
     tf_value = TIMEFRAMES.get(tf_name, 16388)
-    
     if MT5_AVAILABLE:
         connector = MT5Connector(symbol=symbol, timeframe=tf_value)
         if connector.connect():
@@ -58,9 +64,107 @@ def load_data_for_tf(symbol, tf_name, count):
             connector.disconnect()
             if df is not None and len(df) > 20:
                 return df
-    
-    # Fallback на тестовые данные
     return generate_test_data(count=count)
+
+
+def analyze_symbol(df, zigzag_length, use_filter, impulse_atr, diagonal_atr, correction_atr):
+    """Полный анализ: ZigZag + паттерны."""
+    zigzag = ZigZag(df, length=zigzag_length)
+    pivots = zigzag.find_pivots()
+    
+    impulses = ImpulseDetector(pivots, df=df, min_atr_ratio=impulse_atr).find_impulses()
+    diagonals = DiagonalDetector(pivots, df=df, min_atr_ratio=diagonal_atr).find_diagonals()
+    corrections = CorrectionDetector(pivots, df=df, min_atr_ratio=correction_atr).find_corrections()
+    
+    if use_filter:
+        filter_obj = OverlapFilter(impulses, diagonals, corrections)
+        impulses, diagonals, corrections = filter_obj.filter()
+    
+    return pivots, impulses, diagonals, corrections
+
+
+def run_backtest(args):
+    """Бэктест одной или всех стратегий."""
+    tf_name = args.tf
+    tf_value = TIMEFRAMES[tf_name]
+    
+    print("=" * 60)
+    print(f" BACKTEST — {args.symbol} {tf_name} — {args.candles} candles")
+    print("=" * 60)
+    
+    # Загрузка данных
+    df = None
+    if MT5_AVAILABLE:
+        connector = MT5Connector(symbol=args.symbol, timeframe=tf_value)
+        if connector.connect():
+            df = connector.get_candles(count=args.candles)
+            connector.disconnect()
+    if df is None:
+        df = generate_test_data(count=args.candles)
+    
+    print(f"[OK] Загружено {len(df)} свечей.")
+    
+    # Анализ
+    pivots, impulses, diagonals, corrections = analyze_symbol(
+        df, args.zigzag, USE_FILTER, IMPULSE_ATR, DIAGONAL_ATR, CORRECTION_ATR
+    )
+    
+    print(f"[OK] Импульсов: {len(impulses)}, Диагоналей: {len(diagonals)}, Коррекций: {len(corrections)}")
+    
+    # Выбор стратегий
+    if args.all_strategies:
+        strategies_to_run = list_strategies()
+    elif args.strategy:
+        strategies_to_run = [s.strip() for s in args.strategy.split(',')]
+    else:
+        strategies_to_run = ['w2_w3']
+    
+    print(f"\n[INFO] Запуск стратегий: {strategies_to_run}")
+    
+    # Результаты
+    all_results = {}
+    
+    for strat_name in strategies_to_run:
+        try:
+            StrategyClass = get_strategy(strat_name)
+            strategy = StrategyClass()
+            
+            # Генерация сигналов
+            signals = strategy.generate_signals(df, impulses, diagonals, corrections, [])
+            
+            if not signals:
+                print(f"\n[{strat_name}] Нет сигналов.")
+                all_results[strat_name] = {'total_trades': 0, 'winrate': 0, 'profit_factor': 0}
+                continue
+            
+            # Симуляция
+            engine = BacktestEngine(max_bars_hold=args.max_bars)
+            trades = engine.run(signals, df)
+            
+            # Метрики
+            metrics = BacktestMetrics(trades)
+            m = metrics.print_summary(strategy.name)
+            all_results[strat_name] = m
+        except Exception as e:
+            print(f"\n[{strat_name}] ОШИБКА: {e}")
+            all_results[strat_name] = {'total_trades': 0, 'error': str(e)}
+    
+    # Сравнительная таблица
+    if len(all_results) > 1:
+        print()
+        print("=" * 70)
+        print(" СРАВНЕНИЕ СТРАТЕГИЙ")
+        print("=" * 70)
+        print(f"{'Strategy':<15} {'Trades':<8} {'Winrate':<10} {'PF':<8} {'Return':<10}")
+        print("-" * 70)
+        for name, m in all_results.items():
+            if m.get('total_trades', 0) > 0:
+                print(f"{name:<15} {m['total_trades']:<8} "
+                      f"{m['winrate']*100:>6.1f}%   "
+                      f"{m['profit_factor']:>5.2f}   "
+                      f"{m['total_return']:>+7.1f} pips")
+        print("=" * 70)
+        print()
 
 
 def run_single_tf(args, tf_name):
@@ -83,21 +187,10 @@ def run_single_tf(args, tf_name):
     
     print(f"\n[INFO] Загружено {len(df)} свечей.")
     
-    zigzag = ZigZag(df, length=args.zigzag)
-    pivots = zigzag.find_pivots()
-    
-    print(f"\n[INFO] Поиск импульсов...")
-    impulses = ImpulseDetector(pivots, df=df, min_atr_ratio=IMPULSE_ATR).find_impulses()
-    
-    print(f"\n[INFO] Поиск диагоналей...")
-    diagonals = DiagonalDetector(pivots, df=df, min_atr_ratio=DIAGONAL_ATR).find_diagonals()
-    
-    print(f"\n[INFO] Поиск коррекций...")
-    corrections = CorrectionDetector(pivots, df=df, min_atr_ratio=CORRECTION_ATR).find_corrections()
-    
-    if USE_FILTER and not args.no_filter:
-        filter_obj = OverlapFilter(impulses, diagonals, corrections)
-        impulses, diagonals, corrections = filter_obj.filter()
+    pivots, impulses, diagonals, corrections = analyze_symbol(
+        df, args.zigzag, USE_FILTER and not args.no_filter,
+        IMPULSE_ATR, DIAGONAL_ATR, CORRECTION_ATR
+    )
     
     print(f"\n{'='*60}")
     print(f" ПАТТЕРНЫ {'(после фильтра)' if USE_FILTER and not args.no_filter else ''}")
@@ -147,7 +240,7 @@ def run_single_tf(args, tf_name):
 
 
 def run_mtf(args):
-    """MTF-анализ + панель."""
+    """MTF-анализ."""
     print("=" * 60)
     print(f" MTF Analysis — все 5 таймфреймов")
     print(f" {args.symbol} | {args.candles} candles per TF")
@@ -155,7 +248,6 @@ def run_mtf(args):
     
     mtf = MultiTimeframeAnalyzer(symbol=args.symbol, candles_count=args.candles)
     
-    # Загружаем все ТФ
     def loader(tf_name, count):
         return load_data_for_tf(args.symbol, tf_name, count)
     
@@ -165,14 +257,10 @@ def run_mtf(args):
         print("[ERROR] Не удалось проанализировать ни один ТФ")
         return
     
-    # Строим панель
     pb = PanelBuilder(results)
     rows = pb.build_rows()
-    
-    # Вывод в консоль
     pb.print_console()
     
-    # Отдельное окно с панелью
     summary = pb.get_summary()
     panel = MTFPanel(rows, global_trend=summary['global_trend'])
     panel.show()
@@ -184,7 +272,9 @@ def run_mtf(args):
 def main():
     args = parse_args()
     
-    if args.mtf:
+    if args.backtest:
+        run_backtest(args)
+    elif args.mtf:
         run_mtf(args)
     else:
         run_single_tf(args, args.tf)
