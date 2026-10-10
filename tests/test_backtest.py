@@ -356,7 +356,7 @@ class TestW4W5Strategy:
 class TestWCReversalStrategy:
     def test_init(self):
         strat = WCReversalStrategy()
-        assert strat.name == "W_C Reversal"
+        assert strat.name == "W_C Reversal (INV)"  # ← инвертировано
     
     def test_empty_corrections(self):
         strat = WCReversalStrategy()
@@ -396,3 +396,157 @@ class TestStrategyRegistryV2:
     def test_get_wc_reversal(self):
         cls = get_strategy('wc_reversal')
         assert cls == WCReversalStrategy
+
+
+# ============================================================
+# НОВЫЕ СТРАТЕГИИ
+# ============================================================
+from backtest.strategies.w5_divergence import W5DivergenceStrategy
+from backtest.strategies.mtf_confirmed import MTFConfirmedStrategy
+from backtest.strategies.combined import CombinedStrategy
+
+
+class TestW5DivergenceStrategy:
+    def test_init(self):
+        strat = W5DivergenceStrategy()
+        assert strat.name == "W5+Divergence"
+        assert strat.min_retracement == 0.382
+    
+    def test_empty_impulses(self):
+        strat = W5DivergenceStrategy()
+        df = make_df()
+        signals = strat.generate_signals(df, [], [], [], [])
+        assert signals == []
+
+
+class TestMTFConfirmedStrategy:
+    def test_init(self):
+        strat = MTFConfirmedStrategy()
+        assert strat.name == "W2→W3 + MTF"
+        assert strat.ema_len == 200
+    
+    def test_empty_impulses(self):
+        strat = MTFConfirmedStrategy()
+        df = make_df()
+        signals = strat.generate_signals(df, [], [], [], [])
+        assert signals == []
+
+
+class TestCombinedStrategy:
+    def test_init(self):
+        strat = CombinedStrategy()
+        assert strat.name == "Combined (All)"
+        assert len(strat.strategies) == 3
+    
+    def test_empty_impulses(self):
+        strat = CombinedStrategy()
+        df = make_df()
+        signals = strat.generate_signals(df, [], [], [], [])
+        assert signals == []
+
+
+class TestStrategyRegistryV3:
+    def test_all_strategies_registered(self):
+        strategies = list_strategies()
+        assert 'w2_w3' in strategies
+        assert 'w4_w5' in strategies
+        assert 'wc_reversal' in strategies
+        assert 'w5_divergence' in strategies
+        assert 'mtf_confirmed' in strategies
+        assert 'combined' in strategies
+        assert len(strategies) == 6
+
+
+# ============================================================
+# COVERAGE для новых стратегий
+# ============================================================
+class TestW5DivergenceCoverage:
+    def test_init_with_df(self):
+        """Инициализация с df."""
+        df = make_df()
+        strat = W5DivergenceStrategy(df=df)
+        assert strat.divergence.df is not None
+    
+    def test_short_impulse(self):
+        """Импульс с < 6 точками — пропускается."""
+        strat = W5DivergenceStrategy()
+        df = make_df()
+        imp = {
+            'direction': 'bullish',
+            'points': [
+                (df.index[10], 1.1000, '0'),
+                (df.index[20], 1.1100, '1'),
+            ],
+        }
+        signals = strat.generate_signals(df, [imp], [], [], [])
+        assert signals == []
+    
+    def test_zero_size_impulse(self):
+        """Импульс с нулевым размером — пропускается."""
+        strat = W5DivergenceStrategy()
+        df = make_df()
+        imp = {
+            'direction': 'bullish',
+            'points': [
+                (df.index[10], 1.1000, '0'),
+                (df.index[20], 1.1000, '1'),
+                (df.index[30], 1.1000, '2'),
+                (df.index[40], 1.1000, '3'),
+                (df.index[50], 1.1000, '4'),
+                (df.index[60], 1.1000, '5'),
+            ],
+        }
+        signals = strat.generate_signals(df, [imp], [], [], [])
+        assert signals == []
+
+
+class TestMTFConfirmedCoverage:
+    def test_init_custom_ema(self):
+        """Кастомная EMA."""
+        strat = MTFConfirmedStrategy(ema_len=50)
+        assert strat.ema_len == 50
+    
+    def test_no_base_signals(self):
+        """Нет базовых сигналов."""
+        strat = MTFConfirmedStrategy()
+        df = make_df()
+        signals = strat.generate_signals(df, [], [], [], [])
+        assert signals == []
+    
+    def test_with_valid_impulse(self):
+        """С валидным импульсом."""
+        strat = MTFConfirmedStrategy()
+        df = make_df(200, 'up')
+        imp = {
+            'direction': 'bullish',
+            'points': [
+                (df.index[10], 1.1000, '0'),
+                (df.index[20], 1.1100, '1'),
+                (df.index[30], 1.1040, '2'),
+                (df.index[40], 1.1300, '3'),
+                (df.index[50], 1.1200, '4'),
+                (df.index[60], 1.1450, '5'),
+            ],
+        }
+        signals = strat.generate_signals(df, [imp], [], [], [])
+        assert isinstance(signals, list)
+
+
+class TestCombinedCoverage:
+    def test_with_valid_data(self):
+        """Combined с валидными данными."""
+        strat = CombinedStrategy()
+        df = make_df(200, 'up')
+        imp = {
+            'direction': 'bullish',
+            'points': [
+                (df.index[10], 1.1000, '0'),
+                (df.index[20], 1.1100, '1'),
+                (df.index[30], 1.1040, '2'),
+                (df.index[40], 1.1300, '3'),
+                (df.index[50], 1.1200, '4'),
+                (df.index[60], 1.1450, '5'),
+            ],
+        }
+        signals = strat.generate_signals(df, [imp], [], [], [])
+        assert isinstance(signals, list)
