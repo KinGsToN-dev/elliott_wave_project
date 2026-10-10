@@ -43,7 +43,7 @@ intraday:
   target_w2_w3: 1.272
   target_w4_w5: 0.786
   # Trailing stop
-  use_trailing_stop: true
+  use_trailing_stop: false
   trailing_trigger: 0.5
   trailing_distance: 0.3
   # Стратегии (без wc_reversal)
