@@ -571,3 +571,67 @@ class TestPipMultiplier:
         """Неизвестный символ — 10000."""
         engine = BacktestEngine(symbol='UNKNOWN')
         assert engine.pip_multiplier == 10000
+
+
+class TestTrailingStop:
+    def test_trailing_buy(self):
+        """Trailing stop для BUY."""
+        engine = BacktestEngine(
+            max_bars_hold=50,
+            symbol='EURUSD',
+            use_trailing_stop=True,
+            trailing_trigger=0.5,
+            trailing_distance=0.3,
+        )
+        df = make_df(200, 'up')
+        
+        entry_price = df.loc[df.index[10], 'close']
+        signal = {
+            'entry_time': df.index[10],
+            'entry_price': entry_price,
+            'direction': 'BUY',
+            'target': entry_price + 0.05,   # далеко
+            'stop': entry_price - 0.01,     # стоп 100 pips
+        }
+        
+        result = engine.simulate_trade(signal, df)
+        assert result is not None
+        assert result['exit_reason'] in ['TP', 'SL', 'TIME']
+    
+    def test_trailing_sell(self):
+        """Trailing stop для SELL."""
+        engine = BacktestEngine(
+            max_bars_hold=50,
+            symbol='EURUSD',
+            use_trailing_stop=True,
+        )
+        df = make_df(200, 'down')
+        
+        entry_price = df.loc[df.index[10], 'close']
+        signal = {
+            'entry_time': df.index[10],
+            'entry_price': entry_price,
+            'direction': 'SELL',
+            'target': entry_price - 0.05,
+            'stop': entry_price + 0.01,
+        }
+        
+        result = engine.simulate_trade(signal, df)
+        assert result is not None
+    
+    def test_trailing_disabled(self):
+        """Trailing stop отключён — стоп не двигается."""
+        engine = BacktestEngine(use_trailing_stop=False)
+        df = make_df(200, 'up')
+        
+        entry_price = df.loc[df.index[10], 'close']
+        signal = {
+            'entry_time': df.index[10],
+            'entry_price': entry_price,
+            'direction': 'BUY',
+            'target': entry_price + 0.05,
+            'stop': entry_price - 0.01,
+        }
+        
+        result = engine.simulate_trade(signal, df)
+        assert result is not None

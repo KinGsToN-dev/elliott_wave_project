@@ -15,11 +15,12 @@ from fib.extension import ExtensionCalculator
 class W4W5Strategy(BaseStrategy):
     """Стратегия W4 → W5."""
     
-    def __init__(self, min_w4_ratio=0.2, max_w4_ratio=0.6):
+    def __init__(self, min_w4_ratio=0.2, max_w4_ratio=0.6, target_ratio=1.000):
         super().__init__(name="W4→W5")
-        self.description = "Вход после W4, цель — W5 (100% W3)"
+        self.description = "Вход после W4, цель — W5"
         self.min_w4_ratio = min_w4_ratio
         self.max_w4_ratio = max_w4_ratio
+        self.target_ratio = target_ratio
         self.ext = ExtensionCalculator()
     
     def generate_signals(self, df, impulses, diagonals=None, corrections=None, combinations=None):
@@ -53,9 +54,9 @@ class W4W5Strategy(BaseStrategy):
             # Цели W5
             try:
                 targets = self.ext.calculate_w5_targets(p0, p3, p4)
-                if 1.000 not in targets['targets']:
+                if self.target_ratio not in targets['targets']:
                     continue
-                target_price = targets['targets'][1.000]
+                target_price = targets['targets'][self.target_ratio]
             except Exception:
                 continue
             

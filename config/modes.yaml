@@ -1,8 +1,6 @@
 ﻿# ============================================================
 # Режимы торговли — Elliott Wave Project
 # ============================================================
-# Каждый режим = свой ТФ, свои параметры, свои фильтры
-# ============================================================
 
 swing:
   name: "Свинг (H4/D1)"
@@ -14,6 +12,8 @@ swing:
   correction_atr: 1.0
   max_bars_hold: 50
   use_mtf_filter: false
+  use_trailing_stop: false
+  strategies: ['w2_w3', 'w4_w5', 'wc_reversal', 'w5_divergence', 'mtf_confirmed', 'combined']
 
 position:
   name: "Позиционный (D1/W1)"
@@ -25,6 +25,8 @@ position:
   correction_atr: 1.5
   max_bars_hold: 100
   use_mtf_filter: false
+  use_trailing_stop: false
+  strategies: ['w2_w3', 'w4_w5', 'wc_reversal', 'w5_divergence', 'mtf_confirmed', 'combined']
 
 intraday:
   name: "Интрадей (M30/H1)"
@@ -34,18 +36,15 @@ intraday:
   impulse_atr: 1.5
   diagonal_atr: 1.0
   correction_atr: 1.0
-  max_bars_hold: 10
+  max_bars_hold: 20
   use_mtf_filter: true
   mtf_timeframe: 'H4'
-
-# ============================================================
-# Скальпинг — закомментирован, добавим позже
-# ============================================================
-# scalping:
-#   name: "Скальпинг (M5/M15)"
-#   timeframes: ['M5', 'M15']
-#   zigzag_length: 3
-#   impulse_atr: 1.0
-#   max_bars_hold: 5
-#   use_mtf_filter: true
-#   mtf_timeframe: 'H1'
+  # Уменьшенные цели
+  target_w2_w3: 1.272
+  target_w4_w5: 0.786
+  # Trailing stop
+  use_trailing_stop: true
+  trailing_trigger: 0.5
+  trailing_distance: 0.3
+  # Стратегии (без wc_reversal)
+  strategies: ['w2_w3', 'w4_w5', 'w5_divergence', 'mtf_confirmed', 'combined']

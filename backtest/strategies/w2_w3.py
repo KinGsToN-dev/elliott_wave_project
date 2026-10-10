@@ -15,11 +15,12 @@ from fib.extension import ExtensionCalculator
 class W2W3Strategy(BaseStrategy):
     """Стратегия W2 → W3."""
     
-    def __init__(self, min_w2_ratio=0.4, max_w2_ratio=0.85):
+    def __init__(self, min_w2_ratio=0.4, max_w2_ratio=0.85, target_ratio=1.618):
         super().__init__(name="W2→W3")
-        self.description = "Вход после W2, цель — W3 (161.8% W1)"
+        self.description = "Вход после W2, цель — W3"
         self.min_w2_ratio = min_w2_ratio
         self.max_w2_ratio = max_w2_ratio
+        self.target_ratio = target_ratio  # ← новое
         self.ext = ExtensionCalculator()
     
     def generate_signals(self, df, impulses, diagonals=None, corrections=None, combinations=None):
@@ -49,12 +50,15 @@ class W2W3Strategy(BaseStrategy):
             if not (self.min_w2_ratio <= w2_ratio <= self.max_w2_ratio):
                 continue
             
-            # Цели W3
+            
+            # Цель зависит от режима (по умолчанию 1.618)
+            target_ratio = getattr(self, 'target_ratio', 1.618)
             try:
                 targets = self.ext.calculate_w3_targets(p0, p1, p2)
-                if 1.618 not in targets['targets']:
-                    continue
-                target_price = targets['targets'][1.618]
+                if target_ratio not in targets['targets']:
+                    # Fallback на 1.618
+                    target_ratio = 1.618
+                target_price = targets['targets'][target_ratio]
             except Exception:
                 continue
             

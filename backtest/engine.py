@@ -57,21 +57,18 @@ PIP_MULTIPLIER = {
 }
 
 
-
 class BacktestEngine:
     """Движок бэктеста."""
     
-    def __init__(self, max_bars_hold=50, spread=0.0, symbol='EURUSD'):
-        """
-        Args:
-            max_bars_hold: максимум свечей удержания сделки
-            spread: спред (в пунктах)
-            symbol: торговый символ (для правильного расчёта пипсов)
-        """
+    def __init__(self, max_bars_hold=50, spread=0.0, symbol='EURUSD',
+                 use_trailing_stop=False, trailing_trigger=0.5, trailing_distance=0.3):
         self.max_bars_hold = max_bars_hold
         self.spread = spread
         self.symbol = symbol
         self.pip_multiplier = PIP_MULTIPLIER.get(symbol, 10000)
+        self.use_trailing_stop = use_trailing_stop
+        self.trailing_trigger = trailing_trigger
+        self.trailing_distance = trailing_distance
         self.trades = []
     
     def simulate_trade(self, signal, df):
@@ -103,14 +100,40 @@ class BacktestEngine:
         # Ограничиваем горизонт
         after = after.head(self.max_bars_hold)
         
+        # Начальный стоп (может двигаться при trailing)
+        current_stop = stop
+        stop_dist = abs(entry_price - stop)
+        
         for time, row in after.iterrows():
             high = row['high']
             low = row['low']
             
+            # ============================================================
+            # TRAILING STOP
+            # ============================================================
+            if self.use_trailing_stop and stop_dist > 0:
+                if direction == 'BUY':
+                    # Прибыль по текущей свече
+                    current_profit = high - entry_price
+                    # Если прибыль >= trigger × stop_dist → двигаем стоп
+                    if current_profit >= stop_dist * self.trailing_trigger:
+                        new_stop = high - stop_dist * self.trailing_distance
+                        if new_stop > current_stop:
+                            current_stop = new_stop
+                else:  # SELL
+                    current_profit = entry_price - low
+                    if current_profit >= stop_dist * self.trailing_trigger:
+                        new_stop = low + stop_dist * self.trailing_distance
+                        if new_stop < current_stop:
+                            current_stop = new_stop
+            
+            # ============================================================
+            # ПРОВЕРКА ЦЕЛИ И СТОПА
+            # ============================================================
             if direction == 'BUY':
                 # Проверка цели
                 if high >= target:
-                    pnl = (target - entry_price) * self.pip_multiplier  # в пипсах
+                    pnl = (target - entry_price) * self.pip_multiplier
                     return {
                         'entry_time': entry_time,
                         'entry_price': entry_price,
@@ -121,14 +144,14 @@ class BacktestEngine:
                         'exit_reason': 'TP',
                         'bars_held': len(after.loc[:time]),
                     }
-                # Проверка стопа
-                if low <= stop:
-                    pnl = (stop - entry_price) * self.pip_multiplier
+                # Проверка стопа (текущего, с учётом trailing)
+                if low <= current_stop:
+                    pnl = (current_stop - entry_price) * self.pip_multiplier
                     return {
                         'entry_time': entry_time,
                         'entry_price': entry_price,
                         'exit_time': time,
-                        'exit_price': stop,
+                        'exit_price': current_stop,
                         'direction': direction,
                         'pnl': pnl,
                         'exit_reason': 'SL',
@@ -147,13 +170,13 @@ class BacktestEngine:
                         'exit_reason': 'TP',
                         'bars_held': len(after.loc[:time]),
                     }
-                if high >= stop:
-                    pnl = (entry_price - stop) * self.pip_multiplier
+                if high >= current_stop:
+                    pnl = (entry_price - current_stop) * self.pip_multiplier
                     return {
                         'entry_time': entry_time,
                         'entry_price': entry_price,
                         'exit_time': time,
-                        'exit_price': stop,
+                        'exit_price': current_stop,
                         'direction': direction,
                         'pnl': pnl,
                         'exit_reason': 'SL',

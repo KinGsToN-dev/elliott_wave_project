@@ -140,6 +140,8 @@ def run_backtest(args):
         strategies_to_run = list_strategies()
     elif args.strategy:
         strategies_to_run = [s.strip() for s in args.strategy.split(',')]
+    elif mode and 'strategies' in mode:
+        strategies_to_run = mode['strategies']  # из профиля
     else:
         strategies_to_run = ['w2_w3']
     
@@ -150,7 +152,14 @@ def run_backtest(args):
     for strat_name in strategies_to_run:
         try:
             StrategyClass = get_strategy(strat_name)
-            strategy = StrategyClass()
+            
+            # Передаём target_ratio для стратегий w2_w3 и w4_w5
+            if strat_name == 'w2_w3' and mode and 'target_w2_w3' in mode:
+                strategy = StrategyClass(target_ratio=mode['target_w2_w3'])
+            elif strat_name == 'w4_w5' and mode and 'target_w4_w5' in mode:
+                strategy = StrategyClass(target_ratio=mode['target_w4_w5'])
+            else:
+                strategy = StrategyClass()
             
             signals = strategy.generate_signals(df, impulses, diagonals, corrections, [])
             
@@ -165,7 +174,18 @@ def run_backtest(args):
                 all_results[strat_name] = {'total_trades': 0, 'winrate': 0, 'profit_factor': 0}
                 continue
             
-            engine = BacktestEngine(max_bars_hold=max_bars, symbol=args.symbol)
+            # Trailing stop из режима
+            use_trailing = mode.get('use_trailing_stop', False) if mode else False
+            trailing_trigger = mode.get('trailing_trigger', 0.5) if mode else 0.5
+            trailing_distance = mode.get('trailing_distance', 0.3) if mode else 0.3
+            
+            engine = BacktestEngine(
+                max_bars_hold=max_bars,
+                symbol=args.symbol,
+                use_trailing_stop=use_trailing,
+                trailing_trigger=trailing_trigger,
+                trailing_distance=trailing_distance,
+            )
             trades = engine.run(signals, df)
             
             metrics = BacktestMetrics(trades)
