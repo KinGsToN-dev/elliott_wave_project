@@ -23,6 +23,7 @@ class WyckoffSOSStrategy(WyckoffBaseStrategy):
         self.description = "Sign of Strength"
     
     def _check_event(self, analysis, event, df):
+        """SOS + вход на LPS после SOS (по книге стр. 173-175)."""
         if event.type != 'SOS':
             return None
         
@@ -31,11 +32,22 @@ class WyckoffSOSStrategy(WyckoffBaseStrategy):
             if phase not in (Phase.ACCUMULATION, Phase.MARKUP):
                 return None
         
-        has_lps = any(e.type == 'LPS' for e in analysis.events)
-        idx = min(event.idx + 1, len(df) - 1)
+        # Ищем LPS ПОСЛЕ ЭТОГО SOS (в пределах 30 баров)
+        lps = None
+        for e in analysis.events:
+            if (e.type == 'LPS' and 
+                event.idx < e.idx <= event.idx + 30):
+                lps = e
+                break
+        
+        # Вход НЕ на SOS, а на LPS
+        if lps is None:
+            return None
+        
+        idx = min(lps.idx + 1, len(df) - 1)
         return {
             'direction': 'BUY',
-            'pattern': 'SOS' + ('+LPS' if has_lps else ''),
+            'pattern': 'SOS+LPS',
             'confidence': event.confidence,
             'entry_price': float(df.iloc[idx]['close']),
         }

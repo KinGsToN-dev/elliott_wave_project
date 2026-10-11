@@ -23,20 +23,30 @@ class WyckoffSOWStrategy(WyckoffBaseStrategy):
         self.description = "Sign of Weakness"
     
     def _check_event(self, analysis, event, df):
+        """SOW + вход на LPSY после SOW (по книге стр. 176-177)."""
         if event.type != 'SOW':
             return None
         
         if analysis.current_phase is not None:
             phase = analysis.current_phase.phase
-            # Разрешаем SOW в Distribution, Markdown, но НЕ в Accumulation
             if phase == Phase.ACCUMULATION:
                 return None
         
-        has_lpsy = any(e.type == 'LPSY' for e in analysis.events)
-        idx = min(event.idx + 1, len(df) - 1)
+        # Ищем LPSY ПОСЛЕ ЭТОГО SOW (в пределах 30 баров)
+        lpsy = None
+        for e in analysis.events:
+            if (e.type == 'LPSY' and 
+                event.idx < e.idx <= event.idx + 30):
+                lpsy = e
+                break
+        
+        if lpsy is None:
+            return None
+        
+        idx = min(lpsy.idx + 1, len(df) - 1)
         return {
             'direction': 'SELL',
-            'pattern': 'SOW' + ('+LPSY' if has_lpsy else ''),
+            'pattern': 'SOW+LPSY',
             'confidence': event.confidence,
             'entry_price': float(df.iloc[idx]['close']),
         }
