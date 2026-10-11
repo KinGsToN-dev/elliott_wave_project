@@ -37,7 +37,7 @@ class ZigZag:
                     cleaned.append(p)
         self.pivots = pd.DataFrame(cleaned, columns=['time', 'price', 'type'])
         self.pivots.set_index('time', inplace=True)
-        print(f"[OK] ZigZag (length={self.length}): найдено {len(self.pivots)} пивотов.")
+        # print("[ZigZag] зашумлено")
         return self.pivots
     
     def get_zigzag_line(self):

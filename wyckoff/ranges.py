@@ -56,10 +56,10 @@ class TradingRangeDetector:
     
     def __init__(
         self,
-        min_bars: int = 20,
-        max_width_atr: float = 3.0,
+        min_bars: int = 30,
+        max_width_atr: float = 2.5,
         atr_period: int = 14,
-        touch_tolerance_atr: float = 0.3,
+        touch_tolerance_atr: float = 0.5,
     ):
         """
         Параметры:
@@ -165,6 +165,23 @@ class TradingRangeDetector:
         if touches_upper < 1 or touches_lower < 1:
             return None
         
+        # Проверка: range должен быть горизонтальным (не тренд)
+        if bars_count >= 5:
+            x = np.arange(bars_count)
+            highs = sub_df['high'].values
+            lows = sub_df['low'].values
+            
+            slope_high = np.polyfit(x, highs, 1)[0]
+            slope_low = np.polyfit(x, lows, 1)[0]
+            
+            if avg_atr > 0:
+                slope_high_atr = abs(slope_high) / avg_atr
+                slope_low_atr = abs(slope_low) / avg_atr
+                
+                # Если наклон > 0.15 ATR за бар -> это тренд, не range
+                if slope_high_atr > 0.15 or slope_low_atr > 0.15:
+                    return None
+        
         return TradingRange(
             start_idx=start_idx,
             end_idx=end_idx,
@@ -199,8 +216,8 @@ class TradingRangeDetector:
         if not required.issubset(df.columns):
             raise ValueError(f"DataFrame должен содержать колонки: {required}")
         
-        if df is None or len(df) < self.min_bars:
-                    return []
+        if len(df) < self.min_bars:
+            return []
 
 
         atr = self._compute_atr(df)
@@ -218,7 +235,41 @@ class TradingRangeDetector:
             else:
                 i += 1
         
+        # Фильтр наложений
+        ranges = self._filter_overlapping(ranges)
+        
         return ranges
+    
+    def _filter_overlapping(
+        self,
+        ranges: List[TradingRange],
+    ) -> List[TradingRange]:
+        """Убирает наложения: приоритет — где больше касаний + длиннее."""
+        if not ranges:
+            return ranges
+        
+        # Сортируем по (touches_total, bars_count) — лучшие первыми
+        ranges_sorted = sorted(
+            ranges,
+            key=lambda r: (r.touches_upper + r.touches_lower, r.bars_count),
+            reverse=True,
+        )
+        
+        filtered = []
+        for r in ranges_sorted:
+            overlaps = False
+            for existing in filtered:
+                if (r.start_idx <= existing.end_idx and 
+                    r.end_idx >= existing.start_idx):
+                    overlaps = True
+                    break
+            
+            if not overlaps:
+                filtered.append(r)
+        
+        # Возвращаем в хронологическом порядке
+        filtered.sort(key=lambda r: r.start_idx)
+        return filtered
     
     def get_current_range(
         self,

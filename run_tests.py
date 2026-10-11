@@ -23,6 +23,7 @@ def run_tests():
         "--cov=live",
         "--cov-report=term-missing",
         "--cov-report=html:htmlcov",
+        "--cov=wyckoff",
     ]
     
     print("=" * 60)

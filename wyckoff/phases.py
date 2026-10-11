@@ -63,7 +63,7 @@ class PhaseDetector:
         self,
         lookback_bars: int = 50,
         min_bars_for_context: int = 20,
-        trend_atr_threshold: float = 2.0,
+        trend_atr_threshold: float = 0.5,  # было 2.0 - ослаблено
     ):
         """
         Параметры:
@@ -407,26 +407,32 @@ class PhaseDetector:
     def detect_current_phase(
         self,
         df: pd.DataFrame,
+        ranges: Optional[List[TradingRange]] = None,
     ) -> PhaseResult:
         """
-        Определяет текущую фазу (для последнего бара).
+        Определяет текущую фазу.
+        
+        Логика:
+        1. Если передан список ranges — берём ПОСЛЕДНИЙ.
+        2. Если нет — ищем сами.
+        3. Определяем фазу для последнего range.
+        4. Если range нет — Markup / Markdown по последним событиям.
         """
         if df is None or len(df) < 20:
             return PhaseResult(phase=Phase.UNKNOWN, confidence=0.0)
         
-        # 1. Проверяем, есть ли текущий Trading Range
-        range_detector = TradingRangeDetector()
-        current_range = range_detector.get_current_range(df)
+        # Получаем ranges
+        if ranges is None:
+            range_detector = TradingRangeDetector()
+            ranges = range_detector.find_ranges(df)
         
-        if current_range is not None:
-            # Есть range — это Accumulation или Distribution
-            return self.detect_phase(df, current_range)
+        # Берём ПОСЛЕДНИЙ range
+        if ranges:
+            last_range = ranges[-1]
+            return self.detect_phase(df, last_range)
         
-        # 2. Нет range — значит, Markup или Markdown (тренд)
-        # Ищем последние события
+        # Нет ranges — пробуем Markup/Markdown
         event_detector = WyckoffEventDetector()
-        
-        # Создаём временный range — последние 50 баров
         temp_range = TradingRange(
             start_idx=max(0, len(df) - 50),
             end_idx=len(df) - 1,
@@ -436,22 +442,15 @@ class PhaseDetector:
             width_atr=2.0,
             bars_count=50,
         )
-        
         events = event_detector.detect_all(df, temp_range)
         
-        # Проверяем Markup / Markdown
         markup = self._detect_markup(df, events)
         markdown = self._detect_markdown(df, events)
         
         if markup.phase != Phase.UNKNOWN and markdown.phase != Phase.UNKNOWN:
-            # Выбираем более уверенный
-            if markup.confidence >= markdown.confidence:
-                return markup
-            return markdown
-        
+            return markup if markup.confidence >= markdown.confidence else markdown
         if markup.phase != Phase.UNKNOWN:
             return markup
-        
         if markdown.phase != Phase.UNKNOWN:
             return markdown
         

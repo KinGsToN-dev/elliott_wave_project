@@ -286,7 +286,8 @@ class WyckoffEventDetector:
         # Ищем в последней трети range
         start = r.start_idx + int((r.end_idx - r.start_idx) * 0.6)
         
-        for i in range(start, min(r.end_idx + 1, len(df))):
+        max_idx = min(r.end_idx + 1, len(df))
+        for i in range(start, max_idx):
             row = df.iloc[i]
             
             # Пробитие нижней границы
