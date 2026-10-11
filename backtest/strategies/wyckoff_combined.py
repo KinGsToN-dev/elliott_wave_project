@@ -75,21 +75,99 @@ class WyckoffCombinedStrategy(WyckoffBaseStrategy):
         return None
 
     def _check_event(self, analysis, event, df):
-        """Любой Wyckoff signal."""
-        bullish = {'SC', 'AR', 'ST', 'SOS', 'LPS', 'Spring', 'Test'}
-        bearish = {'UT', 'SOW', 'LPSY'}
+        """
+        Combined — только СИЛЬНЫЕ сигналы (по книге).
         
-        if event.type in bullish:
-            direction = 'BUY'
-        elif event.type in bearish:
-            direction = 'SELL'
-        else:
-            return None
+        Spring (с Test), SOS (с LPS), SOW (с LPSY), UT (с Test).
+        НЕ: SC, AR, ST, PS — это части структуры, не сигналы.
+        """
+        # === BULLISH ===
+        if event.type == 'Spring':
+            spring_type = event.meta.get('spring_type', 1)
+            
+            if spring_type == 3:
+                idx = min(event.idx + 1, len(df) - 1)
+                return {
+                    'direction': 'BUY',
+                    'pattern': 'Spring#3',
+                    'confidence': event.confidence,
+                    'entry_price': float(df.iloc[idx]['close']),
+                }
+            
+            test = None
+            for e in analysis.events:
+                if (e.type == 'Test' and 
+                    event.idx < e.idx <= event.idx + 30):
+                    test = e
+                    break
+            
+            if test is None:
+                return None
+            
+            idx = min(test.idx + 1, len(df) - 1)
+            return {
+                'direction': 'BUY',
+                'pattern': f'Spring#{spring_type}+Test',
+                'confidence': event.confidence,
+                'entry_price': float(df.iloc[idx]['close']),
+            }
         
-        idx = min(event.idx + 1, len(df) - 1)
-        return {
-            'direction': direction,
-            'pattern': event.type,
-            'confidence': event.confidence,
-            'entry_price': float(df.iloc[idx]['close']),
-        }
+        if event.type == 'SOS':
+            lps = None
+            for e in analysis.events:
+                if (e.type == 'LPS' and 
+                    event.idx < e.idx <= event.idx + 30):
+                    lps = e
+                    break
+            
+            if lps is None:
+                return None
+            
+            idx = min(lps.idx + 1, len(df) - 1)
+            return {
+                'direction': 'BUY',
+                'pattern': 'SOS+LPS',
+                'confidence': event.confidence,
+                'entry_price': float(df.iloc[idx]['close']),
+            }
+        
+        # === BEARISH ===
+        if event.type in ('UT', 'UTAD'):
+            test = None
+            for e in analysis.events:
+                if (e.type == 'Test' and 
+                    event.idx < e.idx <= event.idx + 30):
+                    test = e
+                    break
+            
+            if test is None:
+                return None
+            
+            idx = min(test.idx + 1, len(df) - 1)
+            return {
+                'direction': 'SELL',
+                'pattern': f'{event.type}+Test',
+                'confidence': event.confidence,
+                'entry_price': float(df.iloc[idx]['close']),
+            }
+        
+        if event.type == 'SOW':
+            lpsy = None
+            for e in analysis.events:
+                if (e.type == 'LPSY' and 
+                    event.idx < e.idx <= event.idx + 30):
+                    lpsy = e
+                    break
+            
+            if lpsy is None:
+                return None
+            
+            idx = min(lpsy.idx + 1, len(df) - 1)
+            return {
+                'direction': 'SELL',
+                'pattern': 'SOW+LPSY',
+                'confidence': event.confidence,
+                'entry_price': float(df.iloc[idx]['close']),
+            }
+        
+        return None
