@@ -26,6 +26,18 @@ class WyckoffUTADStrategy(WyckoffBaseStrategy):
         if event.type not in ('UT', 'UTAD'):
             return None
         
+        # ТФ-проверка: UT на D1+ не торгуем (долгосрочный тренд)
+        import pandas as pd
+        try:
+            idx_series = pd.Series(df.index)
+            median_delta = idx_series.diff().median()
+            hours = median_delta.total_seconds() / 3600
+        except Exception:
+            hours = 4
+        
+        if hours >= 20:
+            return None
+        
         if analysis.current_phase is not None:
             phase = analysis.current_phase.phase
             if phase not in (Phase.DISTRIBUTION, Phase.MARKDOWN):
