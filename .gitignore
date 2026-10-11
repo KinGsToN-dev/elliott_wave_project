@@ -45,3 +45,22 @@ data/cache/*.csv
 # ============================================================
 .DS_Store
 Thumbs.db
+
+# ============================================================
+# Секреты (НЕ в Git!)
+# ============================================================
+config/telegram.yaml
+config/*secret*.yaml
+config/*token*.yaml
+
+# Live-логи
+live/logs/
+*.log
+
+# Дополнительно
+*.bak
+live/state/*.json
+live/logs/*.csv
+live_bundle.txt
+test_telegram_signal.py
+config/telegram.yaml

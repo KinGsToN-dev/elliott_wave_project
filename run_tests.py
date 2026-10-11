@@ -20,6 +20,7 @@ def run_tests():
         "--cov=rules",
         "--cov=mtf",
         "--cov=backtest",
+        "--cov=live",
         "--cov-report=term-missing",
         "--cov-report=html:htmlcov",
     ]

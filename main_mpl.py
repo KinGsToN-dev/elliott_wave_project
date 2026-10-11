@@ -56,6 +56,17 @@ def parse_args():
     parser.add_argument('--max-bars', type=int, default=MAX_BARS_HOLD)
     parser.add_argument('--mode', type=str, default=None, choices=list_modes(),
                        help='Режим торговли (swing, position, intraday)')
+    parser.add_argument('--live', action='store_true',
+                       help='Запустить Live-режим')
+    parser.add_argument('--interval', type=int, default=300,
+                       help='Интервал проверки в Live-режиме (сек)')
+    parser.add_argument('--symbols', type=str, default=None,
+                       help='Символы через запятую (EURUSD,GBPUSD,XAUUSD)')
+    parser.add_argument('--modes', type=str, default=None,
+                       help='Режимы через запятую (swing,intraday,scalping)')
+    parser.add_argument('--all', action='store_true',
+                       help='Все символы + все режимы')
+    
     return parser.parse_args()
 
 
@@ -296,10 +307,41 @@ def run_mtf(args):
     print("\n[OK] MTF-анализ завершён!")
 
 
+def run_live(args):
+    """Запуск Live-режима."""
+    from live.runner_multi import MultiLiveRunner
+    
+    # Определяем символы
+    if args.all:
+        symbols = ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD']
+        modes = ['swing', 'intraday', 'scalping']
+    elif args.symbols:
+        symbols = [s.strip() for s in args.symbols.split(',')]
+        modes = [m.strip() for m in args.modes.split(',')] if args.modes else [args.mode or 'swing']
+    else:
+        symbols = [args.symbol]
+        modes = [args.mode or 'intraday']
+    
+    print(f" Symbols: {symbols}")
+    print(f" Modes: {modes}")
+    
+    runner = MultiLiveRunner(
+        symbols=symbols,
+        modes=modes,
+        strategies=args.strategy.split(',') if args.strategy else None,
+        candles=args.candles,
+        interval=args.interval,
+    )
+    
+    runner.run()
+
+
 def main():
     args = parse_args()
     
-    if args.backtest:
+    if args.live:
+        run_live(args)
+    elif args.backtest:
         run_backtest(args)
     elif args.mtf:
         run_mtf(args)
