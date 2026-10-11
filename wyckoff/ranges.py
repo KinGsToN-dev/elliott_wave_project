@@ -165,6 +165,7 @@ class TradingRangeDetector:
         if touches_upper < 1 or touches_lower < 1:
             return None
         
+            
         # Проверка: range должен быть горизонтальным (не тренд)
         if bars_count >= 5:
             x = np.arange(bars_count)
@@ -179,7 +180,7 @@ class TradingRangeDetector:
                 slope_low_atr = abs(slope_low) / avg_atr
                 
                 # Если наклон > 0.15 ATR за бар -> это тренд, не range
-                if slope_high_atr > 0.15 or slope_low_atr > 0.15:
+                if slope_high_atr > 0.15 or slope_low_atr > 0.05:
                     return None
         
         return TradingRange(

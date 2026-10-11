@@ -41,12 +41,12 @@ class WyckoffBaseStrategy(BaseStrategy):
         self.stop_atr_mult = stop_atr_mult
         self.min_confidence = min_confidence
         self.detector = WyckoffDetector(
-            range_min_bars=15,
-            range_max_width_atr=5.0,
-            spring_depth_atr=1.0,
-            climax_volume_mult=1.5,
-            phase_trend_atr_threshold=1.0,
-            phase_lookback_bars=30,
+        range_min_bars=15,
+        range_max_width_atr=5.0,     # было 5.0 -> 2.0
+        spring_depth_atr=1.5,
+        climax_volume_mult=1.3,
+        phase_trend_atr_threshold=0.5,
+        phase_lookback_bars=30,
         )
     
     def _compute_atr(self, df: pd.DataFrame) -> pd.Series:

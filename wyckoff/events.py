@@ -272,49 +272,48 @@ class WyckoffEventDetector:
         r: TradingRange,
     ) -> Optional[WyckoffEvent]:
         """
-        Spring — ложный пробой нижней границы range.
-        
-        Признаки:
-        - Цена пробивает нижнюю границу (r.lower)
-        - Но НЕ уходит глубоко (обычно < spring_depth_atr * ATR)
-        - Быстро возвращается обратно в range
-        - Объём может быть разным (обычно растёт)
+        Spring — swing low у нижней границы range.
         """
-        atr = self._compute_atr(df)
-        max_depth = self.spring_depth_atr * atr.iloc[r.start_idx:r.end_idx + 1].mean()
+        vol_ma = self._compute_volume_ma(df)
+        lower_zone = r.lower + (r.upper - r.lower) * 0.2
         
-        # Ищем в последней трети range
-        start = r.start_idx + int((r.end_idx - r.start_idx) * 0.6)
-        
-        max_idx = min(r.end_idx + 1, len(df))
-        for i in range(start, max_idx):
+        for i in range(r.start_idx + 3, min(r.end_idx - 2, len(df) - 3)):
             row = df.iloc[i]
             
-            # Пробитие нижней границы
-            if row['low'] < r.lower:
-                depth = r.lower - row['low']
-                
-                # Не слишком глубоко
-                if depth <= max_depth:
-                    # Закрытие выше нижней границы
-                    if row['close'] >= r.lower:
-                        volume = row['tick_volume'] if 'tick_volume' in df.columns else 0
-                        return WyckoffEvent(
-                            type='Spring',
-                            idx=i,
-                            price=float(row['low']),
-                            volume=int(volume),
-                            direction='bullish',
-                            confidence=0.9,
-                            meta={
-                                'range_lower': r.lower,
-                                'depth': round(depth, 6),
-                                'range_idx': (r.start_idx, r.end_idx),
-                            },
-                        )
+            if row['low'] > lower_zone:
+                continue
+            
+            left_lows = [df.iloc[i - k]['low'] for k in range(1, 4)]
+            right_lows = [df.iloc[i + k]['low'] for k in range(1, 4)]
+            
+            if row['low'] > min(left_lows) or row['low'] > min(right_lows):
+                continue
+            
+            spread = row['high'] - row['low']
+            if spread <= 0:
+                continue
+            close_pos = (row['close'] - row['low']) / spread
+            if close_pos < 0.5:
+                continue
+            
+            volume = row['tick_volume'] if 'tick_volume' in df.columns else 0
+            vol_ratio = volume / vol_ma.iloc[i] if vol_ma.iloc[i] > 0 else 1
+            
+            return WyckoffEvent(
+                type='Spring',
+                idx=i,
+                price=float(row['low']),
+                volume=int(volume),
+                direction='bullish',
+                confidence=min(1.0, 0.5 + close_pos * 0.5),
+                meta={
+                    'range_lower': r.lower,
+                    'close_pos': round(close_pos, 2),
+                    'vol_ratio': round(vol_ratio, 2),
+                },
+            )
         
         return None
-    
     # ============================================================
     # Test - повторный тест Spring
     # ============================================================
@@ -453,39 +452,48 @@ class WyckoffEventDetector:
         r: TradingRange,
     ) -> Optional[WyckoffEvent]:
         """
-        UT — ложный пробой верхней границы range.
-        Зеркальное отражение Spring.
+        UT — swing high у верхней границы range.
         """
-        atr = self._compute_atr(df)
-        max_depth = self.spring_depth_atr * atr.iloc[r.start_idx:r.end_idx + 1].mean()
+        vol_ma = self._compute_volume_ma(df)
+        upper_zone = r.upper - (r.upper - r.lower) * 0.2
         
-        start = r.start_idx + int((r.end_idx - r.start_idx) * 0.6)
-        
-        for i in range(start, min(r.end_idx + 1, len(df))):
+        for i in range(r.start_idx + 3, min(r.end_idx - 2, len(df) - 3)):
             row = df.iloc[i]
             
-            if row['high'] > r.upper:
-                depth = row['high'] - r.upper
-                
-                if depth <= max_depth:
-                    # Закрытие ниже верхней границы
-                    if row['close'] <= r.upper:
-                        volume = row['tick_volume'] if 'tick_volume' in df.columns else 0
-                        return WyckoffEvent(
-                            type='UT',
-                            idx=i,
-                            price=float(row['high']),
-                            volume=int(volume),
-                            direction='bearish',
-                            confidence=0.9,
-                            meta={
-                                'range_upper': r.upper,
-                                'depth': round(depth, 6),
-                            },
-                        )
+            if row['high'] < upper_zone:
+                continue
+            
+            left_highs = [df.iloc[i - k]['high'] for k in range(1, 4)]
+            right_highs = [df.iloc[i + k]['high'] for k in range(1, 4)]
+            
+            if row['high'] < max(left_highs) or row['high'] < max(right_highs):
+                continue
+            
+            spread = row['high'] - row['low']
+            if spread <= 0:
+                continue
+            close_pos = (row['close'] - row['low']) / spread
+            if close_pos > 0.5:
+                continue
+            
+            volume = row['tick_volume'] if 'tick_volume' in df.columns else 0
+            vol_ratio = volume / vol_ma.iloc[i] if vol_ma.iloc[i] > 0 else 1
+            
+            return WyckoffEvent(
+                type='UT',
+                idx=i,
+                price=float(row['high']),
+                volume=int(volume),
+                direction='bearish',
+                confidence=min(1.0, 0.5 + (1 - close_pos) * 0.5),
+                meta={
+                    'range_upper': r.upper,
+                    'close_pos': round(close_pos, 2),
+                    'vol_ratio': round(vol_ratio, 2),
+                },
+            )
         
         return None
-    
     # ============================================================
     # SOW - Sign of Weakness
     # ============================================================
