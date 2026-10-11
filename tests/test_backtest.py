@@ -454,7 +454,26 @@ class TestStrategyRegistryV3:
         assert 'w5_divergence' in strategies
         assert 'mtf_confirmed' in strategies
         assert 'combined' in strategies
-        assert len(strategies) == 6
+        assert len(strategies) == 11
+    
+    def test_all_strategies_registered(self):
+        """Все стратегии зарегистрированы."""
+        from backtest.strategies import list_strategies
+        strategies = list_strategies()
+        assert len(strategies) == 11
+        # Elliott
+        assert 'w2_w3' in strategies
+        assert 'w4_w5' in strategies
+        assert 'wc_reversal' in strategies
+        assert 'w5_divergence' in strategies
+        assert 'mtf_confirmed' in strategies
+        assert 'combined' in strategies
+        # Wyckoff
+        assert 'wyckoff_spring' in strategies
+        assert 'wyckoff_sos' in strategies
+        assert 'wyckoff_utad' in strategies
+        assert 'wyckoff_sow' in strategies
+        assert 'wyckoff_combined' in strategies
 
 
 # ============================================================

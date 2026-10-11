@@ -8,6 +8,11 @@ from .wc_reversal import WCReversalStrategy
 from .w5_divergence import W5DivergenceStrategy
 from .mtf_confirmed import MTFConfirmedStrategy
 from .combined import CombinedStrategy
+from .wyckoff_spring import WyckoffSpringStrategy
+from .wyckoff_sos import WyckoffSOSStrategy
+from .wyckoff_utad import WyckoffUTADStrategy
+from .wyckoff_sow import WyckoffSOWStrategy
+from .wyckoff_combined import WyckoffCombinedStrategy
 
 
 STRATEGIES = {
@@ -17,6 +22,11 @@ STRATEGIES = {
     'w5_divergence': W5DivergenceStrategy,
     'mtf_confirmed': MTFConfirmedStrategy,
     'combined': CombinedStrategy,
+    'wyckoff_spring': WyckoffSpringStrategy,
+    'wyckoff_sos': WyckoffSOSStrategy,
+    'wyckoff_utad': WyckoffUTADStrategy,
+    'wyckoff_sow': WyckoffSOWStrategy,
+    'wyckoff_combined': WyckoffCombinedStrategy,
 }
 
 
