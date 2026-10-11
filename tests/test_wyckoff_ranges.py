@@ -59,8 +59,8 @@ class TestTradingRangeDetector:
     def test_init(self):
         """Инициализация."""
         detector = TradingRangeDetector()
-        assert detector.min_bars == 20
-        assert detector.max_width_atr == 3.0
+        assert detector.min_bars == 30      # было 20
+        assert detector.max_width_atr == 2.5  # было 3.0
     
     def test_empty_df(self):
         """Пустой DataFrame — пустой список."""

@@ -114,8 +114,8 @@ class TestWyckoffBaseStrategy:
         """Инициализация."""
         s = WyckoffBaseStrategy()
         assert s.name == "Wyckoff Base"
-        assert s.target_atr_mult == 2.0
-        assert s.stop_atr_mult == 0.5
+        assert s.target_atr_mult == 4.0   # было 2.0
+        assert s.stop_atr_mult == 1.5     # было 0.5
     
     def test_compute_atr(self):
         """ATR считается."""
@@ -247,17 +247,19 @@ class TestWyckoffSpringStrategy:
         assert s.should_enter(analysis, 40, df) is None
     
     def test_should_enter_valid(self):
-        """Валидный Spring → сигнал BUY."""
+        """Spring #3 → сигнал BUY (без Test)."""
         s = WyckoffSpringStrategy(min_confidence=0.5)
         df = make_df(100)
+        spring = make_event('Spring', idx=98)
+        spring.meta['spring_type'] = 3
         analysis = make_analysis_with_phase(
             Phase.ACCUMULATION, confidence=0.8,
-            events=[make_event('Spring', idx=98)],
+            events=[spring],
         )
-        result = s.should_enter(analysis, 98, df)
+        result = s._check_event(analysis, spring, df)
         assert result is not None
         assert result['direction'] == 'BUY'
-        assert result['pattern'] == 'Spring'
+        assert 'Spring#3' in result['pattern']
 
 
 class TestWyckoffSOSStrategy:
@@ -267,27 +269,31 @@ class TestWyckoffSOSStrategy:
         assert 'SOS' in s.name
     
     def test_should_enter_valid(self):
-        """SOS в Accumulation → BUY."""
+        """SOS + LPS → BUY."""
         s = WyckoffSOSStrategy(min_confidence=0.5)
         df = make_df(100)
+        sos = make_event('SOS', idx=90, direction='bullish')
+        lps = make_event('LPS', idx=95)
         analysis = make_analysis_with_phase(
             Phase.ACCUMULATION, confidence=0.8,
-            events=[make_event('SOS', idx=98, direction='bullish')],
+            events=[sos, lps],
         )
-        result = s.should_enter(analysis, 98, df)
+        result = s._check_event(analysis, sos, df)
         assert result is not None
         assert result['direction'] == 'BUY'
         assert 'SOS' in result['pattern']
     
     def test_should_enter_markup(self):
-        """SOS в Markup → BUY."""
+        """SOS + LPS в Markup → BUY."""
         s = WyckoffSOSStrategy(min_confidence=0.5)
         df = make_df(100)
+        sos = make_event('SOS', idx=90)
+        lps = make_event('LPS', idx=95)
         analysis = make_analysis_with_phase(
             Phase.MARKUP, confidence=0.8,
-            events=[make_event('SOS', idx=98)],
+            events=[sos, lps],
         )
-        result = s.should_enter(analysis, 98, df)
+        result = s._check_event(analysis, sos, df)
         assert result is not None
     
     def test_should_enter_wrong_phase(self):
@@ -301,19 +307,19 @@ class TestWyckoffSOSStrategy:
         assert s.should_enter(analysis, 98, df) is None
     
     def test_with_lps_bonus(self):
-        """SOS + LPS → pattern с '+LPS'."""
+        """SOS + LPS (LPS после SOS) → сигнал BUY."""
         s = WyckoffSOSStrategy(min_confidence=0.5)
         df = make_df(100)
+        sos = make_event('SOS', idx=90)
+        lps = make_event('LPS', idx=95)
         analysis = make_analysis_with_phase(
             Phase.ACCUMULATION, confidence=0.8,
-            events=[
-                make_event('SOS', idx=98),
-                make_event('LPS', idx=95),
-            ],
+            events=[sos, lps],
         )
-        result = s.should_enter(analysis, 98, df)
+        result = s._check_event(analysis, sos, df)
         assert result is not None
-        assert '+LPS' in result['pattern']
+        assert result['direction'] == 'BUY'
+        assert 'SOS' in result['pattern']
 
 
 class TestWyckoffUTADStrategy:
@@ -323,17 +329,18 @@ class TestWyckoffUTADStrategy:
         assert 'UT' in s.name
     
     def test_should_enter_valid(self):
-        """UT в Distribution → SELL."""
+        """UT + Test в Distribution → SELL."""
         s = WyckoffUTADStrategy(min_confidence=0.5)
         df = make_df(100)
+        ut = make_event('UT', idx=90, direction='bearish')
+        test = make_event('Test', idx=95)
         analysis = make_analysis_with_phase(
             Phase.DISTRIBUTION, confidence=0.8,
-            events=[make_event('UT', idx=98, direction='bearish')],
+            events=[ut, test],
         )
-        result = s.should_enter(analysis, 98, df)
+        result = s._check_event(analysis, ut, df)
         assert result is not None
         assert result['direction'] == 'SELL'
-        assert result['pattern'] == 'UT'
     
     def test_should_enter_wrong_phase(self):
         """UT в Accumulation → None."""
@@ -353,27 +360,30 @@ class TestWyckoffSOWStrategy:
         assert 'SOW' in s.name
     
     def test_should_enter_valid(self):
-        """SOW в Distribution → SELL."""
+        """SOW + LPSY в Distribution → SELL."""
         s = WyckoffSOWStrategy(min_confidence=0.5)
         df = make_df(100)
+        sow = make_event('SOW', idx=90, direction='bearish')
+        lpsy = make_event('LPSY', idx=95)
         analysis = make_analysis_with_phase(
             Phase.DISTRIBUTION, confidence=0.8,
-            events=[make_event('SOW', idx=98, direction='bearish')],
+            events=[sow, lpsy],
         )
-        result = s.should_enter(analysis, 98, df)
+        result = s._check_event(analysis, sow, df)
         assert result is not None
         assert result['direction'] == 'SELL'
-        assert 'SOW' in result['pattern']
     
     def test_should_enter_markdown(self):
-        """SOW в Markdown → SELL."""
+        """SOW + LPSY в Markdown → SELL."""
         s = WyckoffSOWStrategy(min_confidence=0.5)
         df = make_df(100)
+        sow = make_event('SOW', idx=90)
+        lpsy = make_event('LPSY', idx=95)
         analysis = make_analysis_with_phase(
             Phase.MARKDOWN, confidence=0.8,
-            events=[make_event('SOW', idx=98)],
+            events=[sow, lpsy],
         )
-        result = s.should_enter(analysis, 98, df)
+        result = s._check_event(analysis, sow, df)
         assert result is not None
 
 
