@@ -135,7 +135,6 @@ class TelegramBot:
             active = self.state.get_active(mode='scalping')
             return self._format_signals(active, 'Scalping')
         
-        # /stats
         elif text == '/stats':
             stats = self.state.get_stats()
             
@@ -148,7 +147,25 @@ class TelegramBot:
                 f"📊 Winrate: {stats['winrate']*100:.1f}%"
             )
         
-        # Неизвестная команда
+        # /stop
+        elif text == '/stop':
+            self.running = False
+            return (
+                f"🛑 <b>Бот остановлен</b>\n\n"
+                f"Всего сигналов в состоянии: {len(self.state.state)}\n"
+                f"Для перезапуска запустите runner заново."
+            )
+        
+        # /history [N]
+        elif text.startswith('/history'):
+            parts = text.split()
+            try:
+                n = int(parts[1]) if len(parts) > 1 else 10
+            except (ValueError, IndexError):
+                n = 10
+            return self._read_history(n)
+        
+        # неизвестная команда
         else:
             return None  # не отвечаем
     
@@ -176,6 +193,44 @@ class TelegramBot:
             return "📭 История пуста"
         
         # Берём последние N
+        last = rows[-n:]
+        
+        text = f"📜 <b>Последние {len(last)} сигналов:</b>\n\n"
+        for row in last:
+            direction_emoji = "🟢" if row.get('direction') == 'BUY' else "🔴"
+            text += (
+                f"{direction_emoji} <b>{row.get('symbol', '?')}</b> "
+                f"{row.get('mode', '?')} — {row.get('strategy', '?')}\n"
+                f"   {row.get('direction', '?')} @ {row.get('entry_price', '?')} "
+                f"→ {row.get('target', '?')}\n"
+                f"   R:R {row.get('r_r', '?')}\n\n"
+            )
+        
+        return text.strip()
+
+    def _read_history(self, n=10):
+        """Читает последние N сигналов из CSV-журнала."""
+        import csv
+        from datetime import datetime
+        
+        today = datetime.now().strftime('%Y%m%d')
+        filepath = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'logs', f'signals_{today}.csv'
+        )
+        
+        if not os.path.exists(filepath):
+            return f"📭 История за {today} пуста"
+        
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                rows = list(csv.DictReader(f))
+        except Exception as e:
+            return f"❌ Ошибка чтения журнала: {e}"
+        
+        if not rows:
+            return "📭 История пуста"
+        
         last = rows[-n:]
         
         text = f"📜 <b>Последние {len(last)} сигналов:</b>\n\n"
