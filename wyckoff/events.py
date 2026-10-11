@@ -329,7 +329,7 @@ class WyckoffEventDetector:
             return None
         
         start = spring.idx + 1
-        end = min(spring.idx + 20, len(df))
+        end = min(spring.idx + 30, len(df))
         
         if start >= end:
             return None
@@ -341,7 +341,7 @@ class WyckoffEventDetector:
             row = df.iloc[i]
             if abs(row['low'] - spring.price) <= tolerance:
                 volume = row['tick_volume'] if 'tick_volume' in df.columns else 0
-                if volume < spring.volume:
+                if volume < spring.volume * 0.9:
                     return WyckoffEvent(
                         type='Test',
                         idx=i,

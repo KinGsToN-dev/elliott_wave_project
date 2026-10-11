@@ -49,7 +49,8 @@ def debug_strategy(name, cls, df):
                 else:
                     ema_ok = cur_close < cur_ema
             
-            print(f"   {event_type} @ idx={ev.idx}")
+            spring_type = ev.meta.get('spring_type', '?')
+            print(f"   {event_type} @ idx={ev.idx} (type={spring_type})")
             print(f"     _check_event: {'PASS' if sig else 'FAIL'}")
             if sig:
                 print(f"     direction={sig['direction']}")
