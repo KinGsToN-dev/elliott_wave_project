@@ -249,17 +249,30 @@ class WyckoffDetector:
             print(f"[WARN] Range detection: {e}")
         
         # 2. Events (в текущем range)
-        if result.current_range:
+               
+        if result.ranges:
             try:
-                result.events = self.event_detector.detect_all(
-                    df, result.current_range
-                )
+                for r in result.ranges:
+                    events = self.event_detector.detect_all(df, r)
+                    result.events.extend(events)
             except Exception as e:
                 print(f"[WARN] Event detection: {e}")
         
-        # 3. Phases
+        # Дедупликация events по (type, idx)
+        seen = set()
+        unique_events = []
+        for e in result.events:
+            key = (e.type, e.idx)
+            if key not in seen:
+                seen.add(key)
+                unique_events.append(e)
+        result.events = unique_events
+        
+        # 3. Phases (используем последний range)
         try:
-            result.current_phase = self.phase_detector.detect_current_phase(df)
+            result.current_phase = self.phase_detector.detect_current_phase(
+                df, ranges=result.ranges
+            )
         except Exception as e:
             print(f"[WARN] Phase detection: {e}")
         

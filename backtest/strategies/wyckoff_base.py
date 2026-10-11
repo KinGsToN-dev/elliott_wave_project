@@ -31,8 +31,8 @@ class WyckoffBaseStrategy(BaseStrategy):
     def __init__(
         self,
         name: str = "Wyckoff Base",
-        target_atr_mult: float = 2.0,
-        stop_atr_mult: float = 0.5,
+        target_atr_mult: float = 4.0,
+        stop_atr_mult: float = 1.5,
         min_confidence: float = 0.4,
     ):
         super().__init__(name=name)
@@ -40,7 +40,14 @@ class WyckoffBaseStrategy(BaseStrategy):
         self.target_atr_mult = target_atr_mult
         self.stop_atr_mult = stop_atr_mult
         self.min_confidence = min_confidence
-        self.detector = WyckoffDetector()
+        self.detector = WyckoffDetector(
+            range_min_bars=15,
+            range_max_width_atr=5.0,
+            spring_depth_atr=1.0,
+            climax_volume_mult=1.5,
+            phase_trend_atr_threshold=1.0,
+            phase_lookback_bars=30,
+        )
     
     def _compute_atr(self, df: pd.DataFrame) -> pd.Series:
         """ATR для расчёта таргетов."""
@@ -123,43 +130,45 @@ class WyckoffBaseStrategy(BaseStrategy):
         """
         Генерирует сигналы Wyckoff.
         
-        impulses/diagonals/corrections/combinations игнорируются
-        (они для Elliott-стратегий).
+        Анализирует ПОЛНЫЙ df ОДИН раз, потом проверяет каждый event.
         """
         trades = []
         
         if df is None or len(df) < 50:
             return trades
         
-        # Прогоняем анализ на окне от 50 баров и далее
-        # (чтобы не гонять детектор на каждый бар)
-        step = 5  # каждые 5 баров
-        for idx in range(50, len(df) - 1, step):
-            window = df.iloc[:idx + 1]
-            
-            try:
-                analysis = self.detector.detect_all(window)
-            except Exception:
-                continue
-            
-            # Проверяем сигнал
-            try:
-                signal = self.should_enter(analysis, idx, df)
-            except Exception:
-                continue
-            
+        # Анализ всего df один раз
+        try:
+            analysis = self.detector.detect_all(df)
+        except Exception:
+            return trades
+        
+        # EMA200 для фильтра тренда
+        ema200 = df['close'].ewm(span=200, adjust=False).mean()
+        
+        # Проверяем каждый event
+        for event in analysis.events:
+            signal = self._check_event(analysis, event, df)
             if signal is None:
                 continue
             
-            direction = signal.get('direction', 'BUY')
-            entry_price = signal.get('entry_price', df.iloc[idx]['close'])
+            direction = signal['direction']
+            entry_price = signal['entry_price']
+            idx = min(event.idx + 1, len(df) - 1)
+            
+            # ФИЛЬТР ТРЕНДА: BUY только выше EMA200, SELL только ниже
+            cur_ema = ema200.iloc[idx]
+            cur_close = df.iloc[idx]['close']
+            
+            if direction == 'BUY' and cur_close < cur_ema:
+                continue
+            if direction == 'SELL' and cur_close > cur_ema:
+                continue
             
             stop = self._get_stop(analysis, idx, df, direction)
-            target = self._get_target(
-                analysis, idx, df, direction, entry_price, stop
-            )
+            target = self._get_target(analysis, idx, df, direction, entry_price, stop)
             
-            # Проверка R:R >= 2
+            # R:R >= 1.5
             risk = abs(entry_price - stop)
             reward = abs(target - entry_price)
             if risk <= 0 or reward / risk < 1.5:
@@ -180,6 +189,15 @@ class WyckoffBaseStrategy(BaseStrategy):
             })
         
         return trades
+    
+    
+    def _check_event(self, analysis, event, df):
+        """
+        Проверяет, даёт ли event сигнал.
+        
+        Переопределяется в наследниках.
+        """
+        return None
     
     def _find_event_by_type(self, analysis, event_type: str):
         """Ищет событие по типу."""

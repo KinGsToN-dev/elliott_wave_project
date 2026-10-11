@@ -9,8 +9,8 @@ class WyckoffSpringStrategy(WyckoffBaseStrategy):
     def __init__(
         self,
         target_atr_mult: float = 2.5,
-        stop_atr_mult: float = 0.5,
-        min_confidence: float = 0.5,
+        stop_atr_mult: float = 0.7,
+        min_confidence: float = 0.3,
     ):
         super().__init__(
             name="Wyckoff Spring",
@@ -20,32 +20,19 @@ class WyckoffSpringStrategy(WyckoffBaseStrategy):
         )
         self.description = "Spring в Accumulation"
     
-    def should_enter(self, analysis, idx, df):
-        """Проверяет Spring + Accumulation."""
-        if analysis is None:
+    def _check_event(self, analysis, event, df):
+        if event.type != 'Spring':
             return None
         
-        # Должна быть Accumulation
-        if analysis.current_phase is None:
-            return None
-        if analysis.current_phase.phase != Phase.ACCUMULATION:
-            return None
-        if analysis.current_phase.confidence < self.min_confidence:
-            return None
+        if analysis.current_phase is not None:
+            phase = analysis.current_phase.phase
+            if phase not in (Phase.ACCUMULATION, Phase.MARKUP):
+                return None
         
-        # Ищем Spring
-        spring = self._find_event_by_type(analysis, 'Spring')
-        if spring is None:
-            return None
-        
-        # Бар входа должен быть близко к Spring (в пределах 5 баров)
-        # idx в df — относительно окна анализа
-        if abs(idx - spring.idx) > 5:
-            return None
-        
+        idx = min(event.idx + 1, len(df) - 1)
         return {
             'direction': 'BUY',
             'pattern': 'Spring',
-            'confidence': analysis.current_phase.confidence,
+            'confidence': event.confidence,
             'entry_price': float(df.iloc[idx]['close']),
         }
