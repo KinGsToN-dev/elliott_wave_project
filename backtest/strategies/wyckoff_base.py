@@ -35,6 +35,7 @@ class WyckoffBaseStrategy(BaseStrategy):
         stop_atr_mult: float = 1.5,
         min_confidence: float = 0.4,
         ema_period: int = 200,
+        higher_tf_phase: str = None,
     ):
         super().__init__(name=name)
         self.description = "Wyckoff strategy base"
@@ -42,6 +43,7 @@ class WyckoffBaseStrategy(BaseStrategy):
         self.stop_atr_mult = stop_atr_mult
         self.min_confidence = min_confidence
         self.ema_period = ema_period
+        self.higher_tf_phase = higher_tf_phase
         self.detector = WyckoffDetector(
         range_min_bars=15,
         range_max_width_atr=5.0,     # было 5.0 -> 2.0
@@ -169,6 +171,12 @@ class WyckoffBaseStrategy(BaseStrategy):
             
             stop = self._get_stop(analysis, idx, df, direction)
             target = self._get_target(analysis, idx, df, direction, entry_price, stop)
+            
+            # MTF-фильтр: ОТКЛЮЧЁН (PhaseDetector требует доработки)
+            # Параметр higher_tf_phase сохранён для будущего
+            if False and self.higher_tf_phase is not None:
+                # TODO: включить после улучшения PhaseDetector
+                pass
             
             # R:R >= 1.5
             risk = abs(entry_price - stop)
