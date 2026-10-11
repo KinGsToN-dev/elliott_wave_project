@@ -1,6 +1,0 @@
-symbol,tf,strategy,type,trades,wins,losses,winrate,pf,return,dd
-EURUSD,H4,wyckoff_spring,Wyckoff,0,0,0,0.0,0.0,0.0,0.0
-EURUSD,H4,wyckoff_sos,Wyckoff,7,1,6,0.14285714285714285,0.6055735994480262,-33.48285714285693,-43.379999999999534
-EURUSD,H4,wyckoff_utad,Wyckoff,0,0,0,0.0,0.0,0.0,0.0
-EURUSD,H4,wyckoff_sow,Wyckoff,0,0,0,0.0,0.0,0.0,0.0
-EURUSD,H4,wyckoff_combined,Wyckoff,73,12,61,0.1643835616438356,0.6620260954388608,-294.99714285714515,-393.4571428571454

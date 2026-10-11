@@ -12,6 +12,7 @@ class WyckoffCombinedStrategy(WyckoffBaseStrategy):
         stop_atr_mult: float = 0.7,
         min_confidence: float = 0.4,
         ema_period: int = 200,
+        higher_tf_phase: str = None,
     ):
         super().__init__(
             name="Wyckoff Combined",
@@ -19,6 +20,7 @@ class WyckoffCombinedStrategy(WyckoffBaseStrategy):
             stop_atr_mult=stop_atr_mult,
             min_confidence=min_confidence,
             ema_period=ema_period,
+            higher_tf_phase=higher_tf_phase,
         )
         self.description = "Все Wyckoff сигналы"
     

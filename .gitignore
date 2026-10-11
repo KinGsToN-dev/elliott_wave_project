@@ -64,3 +64,16 @@ live/logs/*.csv
 live_bundle.txt
 test_telegram_signal.py
 config/telegram.yaml
+
+
+
+# Backtest CSV
+wyckoff_backtest_*.csv
+optimization_*.csv
+backtest_matrix_*.csv
+
+# Бэкапы
+*.bak.*
+
+# Оптимизация временные
+optimize_*.py

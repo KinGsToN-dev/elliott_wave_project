@@ -98,6 +98,48 @@ def analyze_elliott(df):
     return impulses, diagonals, corrections
 
 
+# MTF-цепочка: H4 -> D1 -> W1 -> (без MTF)
+MTF_CHAIN = {
+    'H4': 'D1',
+    'D1': 'W1',
+    'W1': None,    # самый старший
+}
+
+
+def get_higher_tf_phase(symbol, current_tf):
+    """
+    Загружает старший ТФ и определяет его фазу.
+    Цепочка: H4 -> D1 -> W1 -> None.
+    """
+    higher_tf = MTF_CHAIN.get(current_tf)
+    if higher_tf is None:
+        return None
+    
+    from wyckoff.detector import WyckoffDetector
+    
+    higher_df = load_data(symbol, higher_tf, 300)
+    if higher_df is None or len(higher_df) < 50:
+        return None
+    
+    try:
+        detector = WyckoffDetector(
+            range_min_bars=15,
+            range_max_width_atr=5.0,
+            spring_depth_atr=1.0,
+            climax_volume_mult=1.5,
+            phase_trend_atr_threshold=1.0,
+            phase_lookback_bars=30,
+        )
+        result = detector.detect_all(higher_df)
+        
+        if result.current_phase is None:
+            return 'unknown'
+        
+        return result.current_phase.phase.value
+    except Exception:
+        return None
+
+
 def run_strategy(
     strategy_name,
     df,
@@ -105,11 +147,12 @@ def run_strategy(
     impulses=None,
     diagonals=None,
     corrections=None,
+    higher_tf_phase=None,
 ):
     """Запускает одну стратегию и возвращает метрики."""
     try:
         StrategyClass = get_strategy(strategy_name)
-        strategy = StrategyClass()
+        strategy = StrategyClass(higher_tf_phase=higher_tf_phase)
         
         # Определяем тип стратегии: Wyckoff или Elliott
         is_wyckoff = strategy_name.startswith('wyckoff_')
@@ -257,10 +300,15 @@ def main():
                     print(f"  [WARN] Ошибка Elliott-анализа: {e}")
             
             # Запуск стратегий
+            higher_tf_phase = get_higher_tf_phase(symbol, tf_name)
+            if higher_tf_phase:
+                print(f"  [MTF] {tf_name} -> higher TF phase = {higher_tf_phase}")
+            
             for strat_name in strategies:
                 result = run_strategy(
                     strat_name, df, symbol,
                     impulses, diagonals, corrections,
+                    higher_tf_phase=higher_tf_phase,
                 )
                 
                 all_results.append({
