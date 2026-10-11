@@ -11,12 +11,14 @@ class WyckoffSOWStrategy(WyckoffBaseStrategy):
         target_atr_mult: float = 3.0,
         stop_atr_mult: float = 0.7,
         min_confidence: float = 0.3,
+        ema_period: int = 200,
     ):
         super().__init__(
             name="Wyckoff SOW",
             target_atr_mult=target_atr_mult,
             stop_atr_mult=stop_atr_mult,
             min_confidence=min_confidence,
+            ema_period=ema_period,
         )
         self.description = "Sign of Weakness"
     

@@ -34,12 +34,14 @@ class WyckoffBaseStrategy(BaseStrategy):
         target_atr_mult: float = 4.0,
         stop_atr_mult: float = 1.5,
         min_confidence: float = 0.4,
+        ema_period: int = 200,
     ):
         super().__init__(name=name)
         self.description = "Wyckoff strategy base"
         self.target_atr_mult = target_atr_mult
         self.stop_atr_mult = stop_atr_mult
         self.min_confidence = min_confidence
+        self.ema_period = ema_period
         self.detector = WyckoffDetector(
         range_min_bars=15,
         range_max_width_atr=5.0,     # было 5.0 -> 2.0
@@ -144,7 +146,7 @@ class WyckoffBaseStrategy(BaseStrategy):
             return trades
         
         # EMA200 для фильтра тренда
-        ema200 = df['close'].ewm(span=200, adjust=False).mean()
+        ema200 = df['close'].ewm(span=self.ema_period, adjust=False).mean()
         
         # Проверяем каждый event
         for event in analysis.events:

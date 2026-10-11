@@ -11,12 +11,14 @@ class WyckoffCombinedStrategy(WyckoffBaseStrategy):
         target_atr_mult: float = 2.5,
         stop_atr_mult: float = 0.7,
         min_confidence: float = 0.4,
+        ema_period: int = 200,
     ):
         super().__init__(
             name="Wyckoff Combined",
             target_atr_mult=target_atr_mult,
             stop_atr_mult=stop_atr_mult,
             min_confidence=min_confidence,
+            ema_period=ema_period,
         )
         self.description = "Все Wyckoff сигналы"
     
