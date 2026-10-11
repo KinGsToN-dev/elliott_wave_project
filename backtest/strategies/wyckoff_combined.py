@@ -75,14 +75,32 @@ class WyckoffCombinedStrategy(WyckoffBaseStrategy):
         return None
 
     def _check_event(self, analysis, event, df):
-        """
-        Combined — только СИЛЬНЫЕ сигналы (по книге).
+        """Combined — только СИЛЬНЫЕ сигналы (мягкая проверка фазы)."""
+        import pandas as pd
+        try:
+            idx_series = pd.Series(df.index)
+            median_delta = idx_series.diff().median()
+            hours = median_delta.total_seconds() / 3600
+            if hours >= 100:
+                window = 90
+            elif hours >= 20:
+                window = 60
+            else:
+                window = 30
+        except Exception:
+            window = 30
         
-        Spring (с Test), SOS (с LPS), SOW (с LPSY), UT (с Test).
-        НЕ: SC, AR, ST, PS — это части структуры, не сигналы.
-        """
+        # Мягкая проверка фазы
+        phase = None
+        if analysis.current_phase is not None:
+            phase = analysis.current_phase.phase
+        
         # === BULLISH ===
         if event.type == 'Spring':
+            # Блокируем BUY только в Distribution/Markdown
+            if phase == Phase.DISTRIBUTION or phase == Phase.MARKDOWN:
+                return None
+            
             spring_type = event.meta.get('spring_type', 1)
             
             if spring_type == 3:
@@ -97,7 +115,7 @@ class WyckoffCombinedStrategy(WyckoffBaseStrategy):
             test = None
             for e in analysis.events:
                 if (e.type == 'Test' and 
-                    event.idx < e.idx <= event.idx + 30):
+                    event.idx < e.idx <= event.idx + window):
                     test = e
                     break
             
@@ -113,10 +131,13 @@ class WyckoffCombinedStrategy(WyckoffBaseStrategy):
             }
         
         if event.type == 'SOS':
+            if phase == Phase.DISTRIBUTION or phase == Phase.MARKDOWN:
+                return None
+            
             lps = None
             for e in analysis.events:
                 if (e.type == 'LPS' and 
-                    event.idx < e.idx <= event.idx + 30):
+                    event.idx < e.idx <= event.idx + window):
                     lps = e
                     break
             
@@ -133,10 +154,13 @@ class WyckoffCombinedStrategy(WyckoffBaseStrategy):
         
         # === BEARISH ===
         if event.type in ('UT', 'UTAD'):
+            if phase == Phase.ACCUMULATION or phase == Phase.MARKUP:
+                return None
+            
             test = None
             for e in analysis.events:
                 if (e.type == 'Test' and 
-                    event.idx < e.idx <= event.idx + 30):
+                    event.idx < e.idx <= event.idx + window):
                     test = e
                     break
             
@@ -152,10 +176,13 @@ class WyckoffCombinedStrategy(WyckoffBaseStrategy):
             }
         
         if event.type == 'SOW':
+            if phase == Phase.ACCUMULATION or phase == Phase.MARKUP:
+                return None
+            
             lpsy = None
             for e in analysis.events:
                 if (e.type == 'LPSY' and 
-                    event.idx < e.idx <= event.idx + 30):
+                    event.idx < e.idx <= event.idx + window):
                     lpsy = e
                     break
             

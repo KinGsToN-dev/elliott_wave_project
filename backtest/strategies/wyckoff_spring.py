@@ -46,10 +46,24 @@ class WyckoffSpringStrategy(WyckoffBaseStrategy):
             }
         
         # Spring #1, #2 — ждать Test ПОСЛЕ ЭТОГО Spring
+        import pandas as pd
+        try:
+            idx_series = pd.Series(df.index)
+            median_delta = idx_series.diff().median()
+            hours = median_delta.total_seconds() / 3600
+            if hours >= 100:
+                window = 90
+            elif hours >= 20:
+                window = 60
+            else:
+                window = 30
+        except Exception:
+            window = 30
+        
         test = None
         for e in analysis.events:
             if (e.type == 'Test' and 
-                event.idx < e.idx <= event.idx + 30):
+                event.idx < e.idx <= event.idx + window):
                 test = e
                 break
         

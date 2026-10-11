@@ -32,11 +32,24 @@ class WyckoffSOSStrategy(WyckoffBaseStrategy):
             if phase not in (Phase.ACCUMULATION, Phase.MARKUP):
                 return None
         
-        # Ищем LPS ПОСЛЕ ЭТОГО SOS (в пределах 30 баров)
+        import pandas as pd
+        try:
+            idx_series = pd.Series(df.index)
+            median_delta = idx_series.diff().median()
+            hours = median_delta.total_seconds() / 3600
+            if hours >= 100:
+                window = 90
+            elif hours >= 20:
+                window = 60
+            else:
+                window = 30
+        except Exception:
+            window = 30
+        
         lps = None
         for e in analysis.events:
             if (e.type == 'LPS' and 
-                event.idx < e.idx <= event.idx + 30):
+                event.idx < e.idx <= event.idx + window):
                 lps = e
                 break
         

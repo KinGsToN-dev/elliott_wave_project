@@ -107,6 +107,29 @@ class WyckoffEventDetector:
             window=self.volume_ma_period, min_periods=1
         ).mean()
     
+    def _get_window_by_tf(self, df: pd.DataFrame, base: int = 30) -> int:
+        """
+        Возвращает размер окна в барах в зависимости от ТФ.
+        H4: base, D1: base*2, W1: base*3.
+        """
+        if len(df) < 2:
+            return base
+        
+        import pandas as pd
+        try:
+            idx = pd.Series(df.index)
+            median_delta = idx.diff().median()
+            hours = median_delta.total_seconds() / 3600
+        except Exception:
+            return base
+        
+        if hours >= 100:
+            return base * 3
+        elif hours >= 20:
+            return base * 2
+        else:
+            return base
+    
     # ============================================================
     # SC - Selling Climax
     # ============================================================
@@ -329,7 +352,8 @@ class WyckoffEventDetector:
             return None
         
         start = spring.idx + 1
-        end = min(spring.idx + 30, len(df))
+        window = self._get_window_by_tf(df, base=30)
+        end = min(spring.idx + window, len(df))
         
         if start >= end:
             return None

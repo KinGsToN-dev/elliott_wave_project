@@ -32,11 +32,24 @@ class WyckoffSOWStrategy(WyckoffBaseStrategy):
             if phase == Phase.ACCUMULATION:
                 return None
         
-        # Ищем LPSY ПОСЛЕ ЭТОГО SOW (в пределах 30 баров)
+        import pandas as pd
+        try:
+            idx_series = pd.Series(df.index)
+            median_delta = idx_series.diff().median()
+            hours = median_delta.total_seconds() / 3600
+            if hours >= 100:
+                window = 90
+            elif hours >= 20:
+                window = 60
+            else:
+                window = 30
+        except Exception:
+            window = 30
+        
         lpsy = None
         for e in analysis.events:
             if (e.type == 'LPSY' and 
-                event.idx < e.idx <= event.idx + 30):
+                event.idx < e.idx <= event.idx + window):
                 lpsy = e
                 break
         
