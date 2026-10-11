@@ -98,11 +98,15 @@ def analyze_elliott(df):
     return impulses, diagonals, corrections
 
 
-# MTF-цепочка: H4 -> D1 -> W1 -> (без MTF)
+# MTF-цепочка: M5 -> M15 -> M30 -> H1 -> H4 -> D1 -> W1 -> (без MTF)
 MTF_CHAIN = {
-    'H4': 'D1',
-    'D1': 'W1',
-    'W1': None,    # самый старший
+    'M5':  'M15',
+    'M15': 'M30',
+    'M30': 'H1',
+    'H1':  'H4',
+    'H4':  'D1',
+    'D1':  'W1',
+    'W1':  None,
 }
 
 
@@ -227,6 +231,10 @@ def parse_args():
         help=f'Количество свечей (по умолчанию {DEFAULT_CANDLES}).',
     )
     parser.add_argument(
+        '--timeframes', type=str, default=None,
+        help='Таймфреймы через запятую (M15,M30,H1,H4,D1). По умолчанию H4,D1.',
+    )
+    parser.add_argument(
         '--strategies', type=str, default=None,
         help='Список стратегий через запятую. Если не задан — все.',
     )
@@ -248,7 +256,12 @@ def main():
     symbols = [args.symbol] if args.symbol else DEFAULT_SYMBOLS
     
     # Таймфреймы
-    timeframes = [args.tf] if args.tf else DEFAULT_TIMEFRAMES
+    if args.timeframes:
+        timeframes = [tf.strip() for tf in args.timeframes.split(',')]
+    elif args.tf:
+        timeframes = [args.tf]
+    else:
+        timeframes = DEFAULT_TIMEFRAMES
     
     # Стратегии
     if args.strategies:
